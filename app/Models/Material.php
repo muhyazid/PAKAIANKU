@@ -12,6 +12,7 @@ class Material extends Model
         'nama_bahan', 
         'kuantitas', 
         'satuan', 
+        'stock',
         'image',
     ];
 

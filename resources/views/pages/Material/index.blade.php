@@ -28,20 +28,22 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Gambar</th>
                                     <th>Nama Bahan</th>
                                     <th>Kuantitas</th>
                                     <th>Satuan</th>
+                                    <th>Stock</th>
+                                    <th>Gambar</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($materials as $material)
+                                @foreach ($materials as $index => $material)
                                     <tr>
-                                        <td>{{ $material->id }}</td>
+                                        <td>{{ $index + 1 }}</td>
                                         <td>{{ $material->nama_bahan }}</td>
                                         <td>{{ $material->kuantitas }}</td>
                                         <td>{{ $material->satuan }}</td>
+                                        <td>{{ $material->stock }}</td>
                                         <td>
                                             @if ($material->image)
                                                 <img src="{{ asset('storage/' . $material->image) }}" alt="Gambar Bahan"
@@ -51,18 +53,37 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <!-- Tombol Edit yang memicu modal -->
-                                            <a href="#" class="btn btn-warning" data-toggle="modal"
-                                                data-target="#editMaterialModal-{{ $material->id }}">Edit</a>
-                                            <!-- Form Hapus -->
+                                            <!-- Tombol View -->
+                                            <a href="#" data-toggle="modal"
+                                                data-target="#viewMaterialModal-{{ $material->id }}"
+                                                style="color: #6c757d; text-decoration: none; margin-right: 8px;">
+                                                <i class="fas fa-eye" style="color: #6c757d;"></i> View
+                                            </a>
+
+                                            <!-- Tombol Edit -->
+                                            <a href="#" data-toggle="modal"
+                                                data-target="#editMaterialModal-{{ $material->id }}"
+                                                style="color: #ffc107; text-decoration: none; margin-right: 8px;">
+                                                <i class="fas fa-edit" style="color: #ffc107;"></i> Edit
+                                            </a>
+
+                                            <!-- Form Hapus dengan konfirmasi -->
                                             <form action="{{ route('materials.destroy', $material->id) }}" method="POST"
-                                                style="display:inline-block;">
+                                                style="display:inline-block;" onsubmit="return confirmDelete(event)">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger">Hapus</button>
+                                                <button type="submit"
+                                                    style="border: none; background: none; color: #dc3545; cursor: pointer; padding: 0; font-size: inherit;">
+                                                    <i class="fas fa-trash" style="color: #dc3545;"></i> Delete
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>
+
+                                    <!-- Include Modal View -->
+                                    @include('pages.material.view', [
+                                        'material' => $material,
+                                    ])
 
                                     <!-- Modal Edit Material -->
                                     <div class="modal fade" id="editMaterialModal-{{ $material->id }}" tabindex="-1"
@@ -102,6 +123,12 @@
                                                                             class="form-control" id="satuan"
                                                                             value="{{ $material->satuan }}" required>
                                                                     </div>
+                                                                    <div class="form-group">
+                                                                        <label for="stock">Stock</label>
+                                                                        <input type="text" name="stock"
+                                                                            class="form-control" id="stock"
+                                                                            value="{{ $material->stock }}" required>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -132,9 +159,26 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    @include('pages.material.create-form')
+                    @include('pages.material.create-form') <!-- Pastikan ini mengarah ke file yang benar -->
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function confirmDelete(event) {
+            // Tampilkan dialog konfirmasi
+            const confirmation = confirm("Apakah kamu yakin ingin menghapus material ini?");
+
+            // Jika pengguna memilih "Tidak", batalkan submit form
+            if (!confirmation) {
+                event.preventDefault();
+                return false;
+            }
+
+            // Jika "Ya", lanjutkan submit form
+            return true;
+        }
+    </script>
+
 @endsection

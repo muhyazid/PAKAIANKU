@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -12,7 +13,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-       // Ambil semua data produk dari database
+        // Ambil semua data produk dari database
         $products = Product::all();
 
         // Kirimkan variabel $products ke view 'products.index'
@@ -54,48 +55,18 @@ class ProductController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        // Temukan produk berdasarkan ID
-        $product = Product::findOrFail($id);
-
-        // Validasi data jika diperlukan
-        $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'kategori' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-        ]);
-
-        // Update data produk
-        $product->update($request->all());
-
-        // Redirect kembali ke halaman index dengan pesan sukses
-        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
-    }
-
-    /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        //
+        // Hapus data produk
+        $product = Product::findOrFail($id);
+        // Hapus gambar dari storage
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+        $product->delete();
+
+        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
     }
 }

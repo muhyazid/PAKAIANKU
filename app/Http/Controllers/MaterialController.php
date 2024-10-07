@@ -13,9 +13,8 @@ class MaterialController extends Controller
      */
     public function index()
     {
-        //
-        // Ambil semua data material dari database
-        $materials = Material::all();
+        // Ambil semua data material dari database, urutkan berdasarkan ID atau created_at
+        $materials = Material::orderBy('created_at', 'asc')->get();
 
         // Kirimkan variabel $materials ke view 'materials.index'
         return view('pages.material.index', compact('materials'));
@@ -41,6 +40,7 @@ class MaterialController extends Controller
             'nama_bahan' => 'required|string|max:255',
             'kuantitas' => 'required|numeric',
             'satuan' => 'required|string|max:50',
+            'stock' => 'required|integer',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -55,6 +55,7 @@ class MaterialController extends Controller
             'nama_bahan' => $request->nama_bahan,
             'kuantitas' => $request->kuantitas,
             'satuan' => $request->satuan,
+            'stock' => $request->stock,
             'image' => $imagePath,
         ]);
 
@@ -89,6 +90,7 @@ class MaterialController extends Controller
         'nama_bahan' => 'required|string|max:255',
         'kuantitas' => 'required|numeric',
         'satuan' => 'required|string|max:50',
+        'stock' => 'required|integer',
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -109,6 +111,7 @@ class MaterialController extends Controller
         $material->nama_bahan = $request->nama_bahan;
         $material->kuantitas = $request->kuantitas;
         $material->satuan = $request->satuan;
+        $material->stock = $request->stock;
         $material->save();
 
         return redirect()->route('materials.index')->with('success', 'Material berhasil diupdate!');
