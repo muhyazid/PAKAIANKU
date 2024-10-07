@@ -33,8 +33,23 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
-         Product::create($request->all());
+        // Validasi input
+        $request->validate([
+            'nama_produk' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'price' => 'nullable|numeric',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Upload gambar
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('images', 'public');
+        }
+
+        // Buat produk baru
+        Product::create(array_merge($request->all(), ['image_path' => $imagePath]));
+
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 

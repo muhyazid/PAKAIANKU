@@ -1,6 +1,10 @@
 @section('content')
-    <form action="{{ route('products.store') }}" method="POST">
+    <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
+        <div class="form-group">
+            <label for="image">Gambar Produk</label>
+            <input type="file" name="image" class="form-control" id="image" accept="image/*" required>
+        </div>
         <div class="form-group">
             <label for="nama_produk">Nama Produk</label>
             <input type="text" name="nama_produk" class="form-control" id="nama_produk" required>
