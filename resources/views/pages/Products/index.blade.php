@@ -23,104 +23,38 @@
     <div class="row">
         @foreach ($products as $product)
             <div class="col-md-3 mb-4">
-                <div class="card" style="width: 18rem; text-align: center;">
+                <div class="card" style="border: 1px solid #000; padding: 10px; text-align: center;">
                     <!-- Gambar Produk -->
-                    <img class="card-img-top" src="{{ asset('storage/' . $product->image_path) }}"
-                        alt="{{ $product->nama_produk }}" style="height: 200px; object-fit: cover;">
-                    <!-- Nama Produk -->
-                    <div class="card-body">
-                        <h5 class="card-title">{{ $product->nama_produk }}</h5>
+                    <div style="border: 1px solid #000; margin-bottom: 10px; height: 150px;">
+                        <img class="card-img-top" src="{{ asset('storage/' . $product->image_path) }}"
+                            alt="{{ $product->nama_produk }}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
+
+                    <!-- Nama Produk -->
+                    <h5 class="card-title" style="font-weight: bold;">{{ $product->nama_produk }}</h5>
+
                     <!-- Tombol Aksi -->
-                    <div class="card-footer d-flex justify-content-around">
-                        <!-- Tombol Edit -->
-                        <button class="btn btn-warning" data-bs-toggle="modal"
+                    <div style="margin-top: 10px;">
+                        <a href="#" class="btn btn-warning" data-bs-toggle="modal"
                             data-bs-target="#editProdukModal-{{ $product->id }}">
                             Edit
-                        </button>
-                        <!-- Tombol View -->
-                        <button class="btn btn-info" data-bs-toggle="modal"
+                        </a>
+                        <a href="#" class="btn btn-info" data-bs-toggle="modal"
                             data-bs-target="#viewProdukModal-{{ $product->id }}">
                             View
-                        </button>
-                        <!-- Tombol Delete -->
-                        <form action="{{ route('products.destroy', $product->id) }}" method="POST">
+                        </a>
+                        <form action="{{ route('products.destroy', $product->id) }}" method="POST"
+                            style="display:inline-block;">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger">
-                                Delete
-                            </button>
+                            <button type="submit" class="btn btn-danger">Delete</button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal Edit Produk -->
-            <div class="modal fade" id="editProdukModal-{{ $product->id }}" tabindex="-1"
-                aria-labelledby="editProdukModalLabel-{{ $product->id }}" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editProdukModalLabel-{{ $product->id }}">Edit Produk -
-                                {{ $product->nama_produk }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <!-- Form Edit Produk -->
-                            <form action="{{ route('products.update', $product->id) }}" method="POST"
-                                enctype="multipart/form-data">
-                                @csrf
-                                @method('PUT')
-                                <div class="mb-3">
-                                    <label for="edit_nama_produk_{{ $product->id }}" class="form-label">Nama
-                                        Produk</label>
-                                    <input type="text" class="form-control" name="nama_produk"
-                                        id="edit_nama_produk_{{ $product->id }}" value="{{ $product->nama_produk }}">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit_kategori_{{ $product->id }}" class="form-label">Kategori</label>
-                                    <input type="text" class="form-control" name="kategori"
-                                        id="edit_kategori_{{ $product->id }}" value="{{ $product->kategori }}">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit_deskripsi_{{ $product->id }}" class="form-label">Deskripsi</label>
-                                    <textarea class="form-control" name="deskripsi" id="edit_deskripsi_{{ $product->id }}">{{ $product->deskripsi }}</textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit_price_{{ $product->id }}" class="form-label">Harga</label>
-                                    <input type="number" class="form-control" name="price"
-                                        id="edit_price_{{ $product->id }}" value="{{ $product->price }}">
-                                </div>
-                                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal View Produk -->
-            <div class="modal fade" id="viewProdukModal-{{ $product->id }}" tabindex="-1"
-                aria-labelledby="viewProdukModalLabel-{{ $product->id }}" aria-hidden="true">
-                <div class="modal-dialog modal-md">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="viewProdukModalLabel-{{ $product->id }}">View Produk -
-                                {{ $product->nama_produk }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="text-center">
-                                <img src="{{ asset('storage/' . $product->image_path) }}"
-                                    alt="{{ $product->nama_produk }}" style="height: 200px; object-fit: cover;">
-                                <p><strong>Nama Produk:</strong> {{ $product->nama_produk }}</p>
-                                <p><strong>Kategori:</strong> {{ $product->kategori }}</p>
-                                <p><strong>Deskripsi:</strong> {{ $product->deskripsi }}</p>
-                                <p><strong>Harga:</strong> Rp {{ number_format($product->price, 0, ',', '.') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @include('pages.products.edit', ['product' => $product])
+            @include('pages.products.view', ['product' => $product])
         @endforeach
     </div>
 
@@ -137,30 +71,61 @@
                     <!-- Form Tambah Produk -->
                     <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        <div class="mb-3">
-                            <label for="nama_produk" class="form-label">Nama Produk</label>
-                            <input type="text" class="form-control" name="nama_produk" id="nama_produk">
+                        <div class="row">
+                            <!-- Bagian Kiri: Upload Gambar -->
+                            <div class="col-md-4 text-center">
+                                <label for="image">Upload Gambar</label>
+                                <div style="margin-bottom: 10px;">
+                                    <img id="avatar-preview" src="#" alt="Gambar"
+                                        style="width: 150px; height: 150px; border: 1px solid #ccc; object-fit: cover; display: block; margin: 0 auto;">
+                                </div>
+                                <input type="file" name="image" id="image" accept="image/*" style="display: none;"
+                                    required>
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="document.getElementById('image').click();">Browse...</button>
+                                <span id="file-name" style="margin-left: 10px;">No file chosen</span>
+                            </div>
+
+                            <!-- Bagian Kanan: Input Form Lainnya -->
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="nama_produk">Nama Produk</label>
+                                    <input type="text" name="nama_produk" class="form-control" id="nama_produk" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="kategori">Kategori</label>
+                                    <input type="text" name="kategori" class="form-control" id="kategori" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="deskripsi">Deskripsi</label>
+                                    <textarea name="deskripsi" class="form-control" id="deskripsi"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="price">Harga</label>
+                                    <input type="number" name="price" class="form-control" id="price">
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="kategori" class="form-label">Kategori</label>
-                            <input type="text" class="form-control" name="kategori" id="kategori">
+
+                        <!-- Tombol Simpan -->
+                        <div class="text-end mt-3">
+                            <button type="submit" class="btn btn-primary">Simpan</button>
                         </div>
-                        <div class="mb-3">
-                            <label for="deskripsi" class="form-label">Deskripsi</label>
-                            <textarea class="form-control" name="deskripsi" id="deskripsi"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="price" class="form-label">Harga</label>
-                            <input type="number" class="form-control" name="price" id="price">
-                        </div>
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Gambar</label>
-                            <input type="file" class="form-control" name="image" id="image">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Tambah Produk</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- JavaScript untuk Pratinjau Gambar -->
+    <script>
+        // JavaScript untuk menampilkan pratinjau gambar saat file dipilih
+        document.getElementById('image').onchange = function(event) {
+            const [file] = event.target.files; // Ambil file yang dipilih
+            if (file) {
+                const preview = document.getElementById('avatar-preview'); // Dapatkan elemen img pratinjau
+                preview.src = URL.createObjectURL(file); // Tampilkan gambar yang dipilih di img
+            }
+        };
+    </script>
 @endsection
