@@ -10,4 +10,8 @@ class Product extends Model
     use HasFactory;
     protected $fillable = ['nama_produk', 'kategori', 'deskripsi', 'image_path'];
     
+    public function boms()
+{
+    return $this->hasMany(BoM::class);
+}
 }

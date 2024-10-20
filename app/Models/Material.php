@@ -7,13 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Material extends Model
 {
-    use HasFactory;
+     protected $table = 'materials';
     protected $fillable = [
         'nama_bahan', 
         'kuantitas', 
         'satuan', 
-        'stock',
         'image',
+        'price',
+        'product_cost', 
+        'produk_id'
     ];
+
+    public function boms()
+    {
+        return $this->belongsToMany(BoM::class, 'bom_material', 'material_id', 'bom_id')
+                    ->withPivot('quantity', 'unit')
+                    ->withTimestamps();
+    }
 
 }

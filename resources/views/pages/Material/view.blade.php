@@ -4,7 +4,7 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="viewMaterialModalLabel">View {{ $material->nama_bahan }}</h5>
+                <h5 class="modal-title text-light" id="viewMaterialModalLabel">View {{ $material->nama_bahan }}</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,11 +22,12 @@
                     </div>
                     <!-- Bagian Kanan: Informasi -->
                     <div class="col-md-8">
-                        <div><strong>Name:</strong> {{ $material->nama_bahan }}</div>
-                        <div><strong>Kuantitas:</strong> {{ $material->kuantitas }}</div>
-                        <div><strong>Satuan:</strong> {{ $material->satuan }}</div>
-                        <div><strong>Stock:</strong> {{ $material->stock }}</div>
-                        <div><strong>Updated at:</strong> {{ $material->updated_at->format('M d, Y H:i:s') }}</div>
+                        <div class="text-light"><strong>Name:</strong> {{ $material->nama_bahan }}</div>
+                        <div class="text-light"><strong>Kuantitas:</strong> {{ $material->kuantitas }}</div>
+                        <div class="text-light"><strong>Satuan:</strong> {{ $material->satuan }}</div>
+                        <div class="text-light"><strong>Stock:</strong> {{ $material->stock }}</div>
+                        <div class="text-light"><strong>Updated at:</strong>
+                            {{ $material->updated_at->format('M d, Y H:i:s') }}</div>
                     </div>
                 </div>
             </div>
@@ -38,15 +39,18 @@
 </div>
 
 <style>
-    .modal-dialog {
-        max-width: 600px;
-        /* Ubah sesuai kebutuhan */
+    .text-light {
+        color: #f8f9fa !important;
+        /* Warna teks terang */
+    }
+
+    .modal-header .close {
+        color: #ffffff;
+        /* Tetap menggunakan warna terang untuk tombol close */
     }
 
     .modal-body img {
         width: 100%;
-        /* Sesuaikan gambar dengan lebar modal */
         height: auto;
-        /* Biarkan tinggi proporsional */
     }
 </style>

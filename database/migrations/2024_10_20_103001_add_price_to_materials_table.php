@@ -12,10 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('materials', function (Blueprint $table) {
-            /// Hapus foreign key constraint
-            $table->dropForeign(['produk_id']); 
-            // Hapus kolom 'produk_id'
-            $table->dropColumn('produk_id');
+            //
+            $table->decimal('price', 10, 2)->nullable()->after('stock');
         });
     }
 
@@ -25,11 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('materials', function (Blueprint $table) {
-           // Tambahkan kembali kolom 'produk_id' jika ingin rollback
-            $table->unsignedBigInteger('produk_id')->nullable();
-
-            // Tambahkan kembali foreign key constraint jika ingin rollback
-            $table->foreign('produk_id')->references('id')->on('products')->onDelete('cascade');
+            //
+            $table->dropColumn('price');
         });
     }
 };

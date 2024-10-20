@@ -84,6 +84,24 @@
                 <span class="menu-title">Material</span>
             </a>
         </li>
+        <li class="nav-item menu-items {{ Request::is('boms') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ url('/boms') }}">
+                <span class="menu-icon">
+                    <i class="mdi mdi-cloud-print-outline"></i>
+                </span>
+                <span class="menu-title">BoM</span>
+            </a>
+        </li>
+
+        <!-- Tambahan menu Manufacturing Order -->
+        <li class="nav-item menu-items {{ Request::is('manufacturing_orders') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ url('/manufacturing_orders') }}">
+                <span class="menu-icon">
+                    <i class="mdi mdi-factory"></i>
+                </span>
+                <span class="menu-title">Manufacturing Order</span>
+            </a>
+        </li>
 
         <li class="nav-item menu-items">
             <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">

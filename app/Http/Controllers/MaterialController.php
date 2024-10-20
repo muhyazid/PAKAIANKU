@@ -40,7 +40,7 @@ class MaterialController extends Controller
             'nama_bahan' => 'required|string|max:255',
             'kuantitas' => 'required|numeric',
             'satuan' => 'required|string|max:50',
-            'stock' => 'required|integer',
+            'price' => 'required|numeric',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -55,7 +55,7 @@ class MaterialController extends Controller
             'nama_bahan' => $request->nama_bahan,
             'kuantitas' => $request->kuantitas,
             'satuan' => $request->satuan,
-            'stock' => $request->stock,
+            'price' => $request->price, 
             'image' => $imagePath,
         ]);
 
@@ -90,7 +90,7 @@ class MaterialController extends Controller
         'nama_bahan' => 'required|string|max:255',
         'kuantitas' => 'required|numeric',
         'satuan' => 'required|string|max:50',
-        'stock' => 'required|integer',
+        'price' => 'required|numeric',
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -111,7 +111,8 @@ class MaterialController extends Controller
         $material->nama_bahan = $request->nama_bahan;
         $material->kuantitas = $request->kuantitas;
         $material->satuan = $request->satuan;
-        $material->stock = $request->stock;
+        $material->price = $request->price;
+        
         $material->save();
 
         return redirect()->route('materials.index')->with('success', 'Material berhasil diupdate!');
