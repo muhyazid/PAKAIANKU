@@ -3,61 +3,179 @@
 @section('title', 'Tambah Manufacturing Order')
 
 @section('content')
+    <h3>Tambah Manufacturing Order</h3>
+
+    <form action="{{ route('manufacturing_orders.store') }}" method="POST">
+        @csrf
+        <div class="form-group">
+            <label for="product_id">Produk</label>
+            <select name="product_id" id="product_id" class="form-control" required>
+                <option value="">Pilih Produk</option>
+                @foreach ($products as $product)
+                    <option value="{{ $product->id }}">{{ $product->nama_produk }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="quantity">Kuantitas</label>
+            <input type="number" name="quantity" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="start_date">Tanggal Mulai</label>
+            <input type="datetime-local" name="start_date" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_date">Tanggal Selesai</label>
+            <input type="datetime-local" name="end_date" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select name="status" class="form-control" required>
+                <option value="Draft">Draft</option>
+                <option value="Confirmed">Confirmed</option>
+                <option value="Done">Done</option>
+            </select>
+        </div>
+
+        <h4>Materials</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Material</th>
+                    <th>To Consume</th>
+                    <th>Quantity</th>
+                    <th>Consumed</th>
+                </tr>
+            </thead>
+            <tbody id="material-list">
+                <!-- Material akan muncul di sini dengan JavaScript -->
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-primary">Simpan</button>
+    </form>
+
+    <script>
+        document.getElementById('product_id').addEventListener('change', function() {
+            let productId = this.value;
+            let materialList = document.getElementById('material-list');
+
+            if (!productId) {
+                materialList.innerHTML = '';
+                return;
+            }
+
+            // Mengambil data material berdasarkan produk melalui AJAX
+            fetch(`/manufacturing_orders/materials/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    materialList.innerHTML = '';
+
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    // Menampilkan material yang diambil dari server
+                    data.materials.forEach(material => {
+                        materialList.innerHTML += `
+                    <tr>
+                        <td>${material.nama_bahan}</td>
+                        <td><input type="number" name="materials[${material.id}][to_consume]" value="${material.pivot.quantity}" required></td>
+                        <td><input type="number" name="materials[${material.id}][quantity]" value="${material.pivot.quantity}" required></td>
+                        <td><input type="checkbox" name="materials[${material.id}][consumed]" value="1"></td>
+                    </tr>`;
+                    });
+                })
+                .catch(error => console.error('Error fetching materials:', error));
+        });
+    </script>
+
+@endsection
+
+
+
+{{-- @extends('layouts.master')
+
+@section('title', 'Tambah Manufacturing Order')
+
+@section('content')
     <div class="page-header">
-        <h3 class="page-title">Tambah Manufacturing Order</h3>
+        <h3 class="page-title">Permintaan Pesanan</h3>
     </div>
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('manufacturing-orders.store') }}" method="POST">
+            <form action="{{ route('manufacturing_orders.store') }}" method="POST">
                 @csrf
-                <div class="form-group">
-                    <label for="product_id">Product</label>
-                    <select name="product_id" class="form-control" required>
-                        <option value="">Pilih Produk</option>
-                        @foreach ($products as $product)
-                            <option value="{{ $product->id }}">{{ $product->nama_produk }}</option>
-                        @endforeach
-                    </select>
+
+                <!-- Pilih Produk -->
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="product_id">Nama Produk</label>
+                        <select name="product_id" id="product_id" class="form-control" required>
+                            <option value="">Pilih Produk</option>
+                            @foreach ($products as $product)
+                                <option value="{{ $product->id }}">{{ $product->nama_produk }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="bom_id">Kode BoM</label>
+                        <select name="bom_id" id="bom_id" class="form-control" disabled>
+                            <option value="">Pilih BoM</option>
+                            <!-- BoM akan otomatis terisi melalui JS -->
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="quantity">Quantity</label>
-                    <input type="number" name="quantity" class="form-control" required>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="quantity">Kuantitas Produksi</label>
+                        <input type="number" name="quantity" id="quantity" class="form-control" required>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="start_date">Tanggal Mulai Produksi</label>
+                        <input type="datetime-local" name="start_date" class="form-control" required>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="end_date">Tanggal Selesai Produksi</label>
+                        <input type="datetime-local" name="end_date" class="form-control" required>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="status">Status</label>
+                        <select name="status" id="status" class="form-control" required>
+                            <option value="Draft">Draft</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Done">Done</option>
+                        </select>
+                    </div>
+
+
                 </div>
 
-                <div class="form-group">
-                    <label for="start_date">Start Date</label>
-                    <input type="datetime-local" name="start_date" class="form-control" required>
-                </div>
-
-                <h4>Materials</h4>
+                <!-- Tabel Material yang digunakan -->
+                <h4>Komponen / Material</h4>
                 <table class="table table-bordered">
                     <thead>
                         <tr>
                             <th>Material</th>
                             <th>To Consume</th>
-                            <th>Unit</th>
+                            <th>Quantity</th>
+                            <th>Consumed</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach ($materials as $material)
-                            <tr>
-                                <td>
-                                    <input type="checkbox" name="materials[{{ $loop->index }}][material_id]"
-                                        value="{{ $material->id }}">
-                                    {{ $material->nama_bahan }}
-                                </td>
-                                <td>
-                                    <input type="number" name="materials[{{ $loop->index }}][to_consume]"
-                                        class="form-control" required>
-                                </td>
-                                <td>
-                                    <input type="text" name="materials[{{ $loop->index }}][unit]" class="form-control"
-                                        required>
-                                </td>
-                            </tr>
-                        @endforeach
+                    <tbody id="material-list">
+                        <!-- Material dari BoM akan di-append disini oleh JavaScript -->
                     </tbody>
                 </table>
 
@@ -65,4 +183,75 @@
             </form>
         </div>
     </div>
-@endsection
+
+    <!-- JavaScript untuk mengisi Material secara otomatis -->
+    <script>
+        document.getElementById('product_id').addEventListener('change', function() {
+            let productId = this.value;
+            let bomSelect = document.getElementById('bom_id');
+            let materialList = document.getElementById('material-list');
+            let quantity = document.getElementById('quantity').value || 1;
+
+            if (!productId) {
+                bomSelect.disabled = true;
+                materialList.innerHTML = '';
+                return;
+            }
+
+            // Mengambil data BoM menggunakan Ajax
+            fetch(`/boms/materials/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    bomSelect.innerHTML = '<option value="">Pilih BoM</option>';
+                    data.boms.forEach(bom => {
+                        bomSelect.innerHTML +=
+                            `<option value="${bom.id}">${bom.production_code}</option>`;
+                    });
+                    bomSelect.disabled = false;
+
+                    // Menampilkan Material di tabel
+                    materialList.innerHTML = '';
+                    data.materials.forEach(material => {
+                        let toConsume = material.pivot.quantity * quantity;
+                        materialList.innerHTML += `
+                        <tr>
+                            <td>${material.nama_bahan}</td>
+                            <td><input type="number" name="materials[${material.id}][to_consume]" value="${toConsume}" class="form-control" readonly></td>
+                            <td><input type="number" name="materials[${material.id}][quantity]" value="${toConsume}" class="form-control" readonly></td>
+                            <td><input type="checkbox" name="materials[${material.id}][consumed]" value="1"></td>
+                            <td><button type="button" class="btn btn-danger remove-row">-</button></td>
+                        </tr>`;
+                    });
+                })
+                .catch(error => console.error('Error fetching BoM:', error));
+        });
+
+        // Recalculate when quantity is changed
+        document.getElementById('quantity').addEventListener('input', function() {
+            let productId = document.getElementById('product_id').value;
+            if (!productId) return;
+
+            let quantity = this.value || 1;
+            let materialList = document.getElementById('material-list');
+
+            // Fetch BoM again with updated quantity
+            fetch(`/boms/materials/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    materialList.innerHTML = '';
+                    data.materials.forEach(material => {
+                        let toConsume = material.pivot.quantity * quantity;
+                        materialList.innerHTML += `
+                        <tr>
+                            <td>${material.nama_bahan}</td>
+                            <td><input type="number" name="materials[${material.id}][to_consume]" value="${toConsume}" class="form-control" readonly></td>
+                            <td><input type="number" name="materials[${material.id}][quantity]" value="${toConsume}" class="form-control" readonly></td>
+                            <td><input type="checkbox" name="materials[${material.id}][consumed]" value="1"></td>
+                            <td><button type="button" class="btn btn-danger remove-row">-</button></td>
+                        </tr>`;
+                    });
+                })
+                .catch(error => console.error('Error fetching BoM:', error));
+        });
+    </script>
+@endsection --}}
