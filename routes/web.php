@@ -20,11 +20,7 @@ Route::resource('boms', BoMController::class);
 
 Route::get('/boms/{id}/report', [BoMController::class, 'report'])->name('boms.report');
 
-
-
 Route::resource('manufacturing_orders', ManufacturingOrderController::class);
-
-Route::get('manufacturing_orders/materials/{productId}', [ManufacturingOrderController::class, 'getMaterialsByProduct']);
 
 
 

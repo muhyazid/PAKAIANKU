@@ -5,7 +5,6 @@
 @section('content')
     <h3>Daftar Manufacturing Orders</h3>
     <a href="{{ route('manufacturing_orders.create') }}" class="btn btn-primary">Tambah Manufacturing Order</a>
-
     <table class="table table-bordered mt-3">
         <thead>
             <tr>
@@ -15,6 +14,7 @@
                 <th>Tanggal Mulai</th>
                 <th>Tanggal Selesai</th>
                 <th>Status</th>
+                <th>Aksi</th>
             </tr>
         </thead>
         <tbody>
@@ -26,11 +26,21 @@
                     <td>{{ $order->start_date }}</td>
                     <td>{{ $order->end_date }}</td>
                     <td>{{ $order->status }}</td>
+                    <td>
+                        <a href="{{ route('manufacturing_orders.edit', $order->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                        <form action="{{ route('manufacturing_orders.destroy', $order->id) }}" method="POST"
+                            style="display: inline-block;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                        </form>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 @endsection
+
 
 
 {{-- @extends('layouts.master')

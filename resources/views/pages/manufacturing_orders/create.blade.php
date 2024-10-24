@@ -4,7 +4,6 @@
 
 @section('content')
     <h3>Tambah Manufacturing Order</h3>
-
     <form action="{{ route('manufacturing_orders.store') }}" method="POST">
         @csrf
         <div class="form-group">
@@ -16,22 +15,18 @@
                 @endforeach
             </select>
         </div>
-
         <div class="form-group">
             <label for="quantity">Kuantitas</label>
             <input type="number" name="quantity" class="form-control" required>
         </div>
-
         <div class="form-group">
             <label for="start_date">Tanggal Mulai</label>
             <input type="datetime-local" name="start_date" class="form-control" required>
         </div>
-
         <div class="form-group">
             <label for="end_date">Tanggal Selesai</label>
             <input type="datetime-local" name="end_date" class="form-control">
         </div>
-
         <div class="form-group">
             <label for="status">Status</label>
             <select name="status" class="form-control" required>
@@ -40,62 +35,10 @@
                 <option value="Done">Done</option>
             </select>
         </div>
-
-        <h4>Materials</h4>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Material</th>
-                    <th>To Consume</th>
-                    <th>Quantity</th>
-                    <th>Consumed</th>
-                </tr>
-            </thead>
-            <tbody id="material-list">
-                <!-- Material akan muncul di sini dengan JavaScript -->
-            </tbody>
-        </table>
-
         <button type="submit" class="btn btn-primary">Simpan</button>
     </form>
-
-    <script>
-        document.getElementById('product_id').addEventListener('change', function() {
-            let productId = this.value;
-            let materialList = document.getElementById('material-list');
-
-            if (!productId) {
-                materialList.innerHTML = '';
-                return;
-            }
-
-            // Mengambil data material berdasarkan produk melalui AJAX
-            fetch(`/manufacturing_orders/materials/${productId}`)
-                .then(response => response.json())
-                .then(data => {
-                    materialList.innerHTML = '';
-
-                    if (data.error) {
-                        alert(data.error);
-                        return;
-                    }
-
-                    // Menampilkan material yang diambil dari server
-                    data.materials.forEach(material => {
-                        materialList.innerHTML += `
-                    <tr>
-                        <td>${material.nama_bahan}</td>
-                        <td><input type="number" name="materials[${material.id}][to_consume]" value="${material.pivot.quantity}" required></td>
-                        <td><input type="number" name="materials[${material.id}][quantity]" value="${material.pivot.quantity}" required></td>
-                        <td><input type="checkbox" name="materials[${material.id}][consumed]" value="1"></td>
-                    </tr>`;
-                    });
-                })
-                .catch(error => console.error('Error fetching materials:', error));
-        });
-    </script>
-
 @endsection
+
 
 
 

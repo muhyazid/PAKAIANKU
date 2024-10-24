@@ -11,7 +11,12 @@ class Product extends Model
     protected $fillable = ['nama_produk', 'kategori', 'deskripsi', 'image_path'];
     
     public function boms()
-{
-    return $this->hasMany(BoM::class);
-}
+    {
+        return $this->hasMany(BoM::class);
+    }
+
+    public function manufacturingOrders()
+    {
+        return $this->hasMany(ManufacturingOrder::class);
+    }
 }
