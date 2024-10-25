@@ -8,10 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class ManufacturingOrder extends Model
 {
     use HasFactory;
-     protected $fillable = ['product_id', 'quantity', 'start_date', 'end_date', 'status'];
+     protected $fillable = ['product_id', 'quantity', 'start_date', 'kode_MO', 'status'];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function materials()
+    {
+        return $this->belongsToMany(Material::class, 'manufacturing_order_materials')
+                    ->withPivot('to_consume', 'quantity')
+                    ->withTimestamps();
+    }
+
 }

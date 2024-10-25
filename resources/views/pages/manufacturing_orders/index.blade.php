@@ -8,23 +8,23 @@
     <table class="table table-bordered mt-3">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>No</th>
+                <th>Kode MO</th>
                 <th>Produk</th>
                 <th>Jumlah</th>
                 <th>Tanggal Mulai</th>
-                <th>Tanggal Selesai</th>
                 <th>Status</th>
                 <th>Aksi</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($orders as $order)
+            @foreach ($orders as $index => $order)
                 <tr>
-                    <td>{{ $order->id }}</td>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $order->kode_MO }}</td>
                     <td>{{ $order->product->nama_produk }}</td>
                     <td>{{ $order->quantity }}</td>
                     <td>{{ $order->start_date }}</td>
-                    <td>{{ $order->end_date }}</td>
                     <td>{{ $order->status }}</td>
                     <td>
                         <a href="{{ route('manufacturing_orders.edit', $order->id) }}" class="btn btn-warning btn-sm">Edit</a>

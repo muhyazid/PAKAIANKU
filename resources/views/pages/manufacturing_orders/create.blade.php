@@ -15,18 +15,22 @@
                 @endforeach
             </select>
         </div>
+
+        <div class="form-group">
+            <label for="kode_MO">Kode MO</label>
+            <input type="text" name="kode_MO" class="form-control" required>
+        </div>
+
         <div class="form-group">
             <label for="quantity">Kuantitas</label>
-            <input type="number" name="quantity" class="form-control" required>
+            <input type="number" name="quantity" id="mo_quantity" class="form-control" required>
         </div>
+
         <div class="form-group">
             <label for="start_date">Tanggal Mulai</label>
             <input type="datetime-local" name="start_date" class="form-control" required>
         </div>
-        <div class="form-group">
-            <label for="end_date">Tanggal Selesai</label>
-            <input type="datetime-local" name="end_date" class="form-control">
-        </div>
+
         <div class="form-group">
             <label for="status">Status</label>
             <select name="status" class="form-control" required>
@@ -35,10 +39,86 @@
                 <option value="Done">Done</option>
             </select>
         </div>
+
+        <!-- Materials Section -->
+        <div class="form-group mt-4">
+            <h4>Materials Required</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Unit</th>
+                            <th>Required Quantity</th>
+                            <th>To Consume</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materials-container">
+                        <!-- Materials will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary">Simpan</button>
     </form>
-@endsection
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const productSelect = document.getElementById('product_id');
+            const quantityInput = document.getElementById('mo_quantity');
+            const materialsContainer = document.getElementById('materials-container');
+
+            function updateMaterials() {
+                const productId = productSelect.value;
+                const quantity = parseFloat(quantityInput.value) || 0;
+
+                if (!productId) {
+                    materialsContainer.innerHTML = '';
+                    return;
+                }
+
+                fetch(`/manufacturing_orders/materials/${productId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            materialsContainer.innerHTML =
+                                `<tr><td colspan="4" class="text-center">${data.error}</td></tr>`;
+                            return;
+                        }
+
+                        materialsContainer.innerHTML = data.materials.map(material => {
+                            const requiredQty = (material.pivot.quantity * quantity).toFixed(2);
+                            return `
+                                <tr>
+                                    <td>${material.nama_bahan}</td>
+                                    <td>${material.pivot.unit}</td>
+                                    <td>${requiredQty}</td>
+                                    <td>
+                                        <input type="hidden" name="materials[${material.id}][material_id]" value="${material.id}">
+                                        <input type="number" 
+                                               name="materials[${material.id}][to_consume]" 
+                                               value="${requiredQty}" 
+                                               class="form-control"
+                                               step="0.01"
+                                               required>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        materialsContainer.innerHTML =
+                            '<tr><td colspan="4" class="text-center">Error loading materials</td></tr>';
+                    });
+            }
+
+            productSelect.addEventListener('change', updateMaterials);
+            quantityInput.addEventListener('input', updateMaterials);
+        });
+    </script>
+@endsection
 
 
 

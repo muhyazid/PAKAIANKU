@@ -21,6 +21,11 @@
         </div>
 
         <div class="form-group">
+            <label for="kode_MO">Kode MO</label>
+            <input type="text" name="kode_MO" class="form-control" value="{{ $order->kode_MO }}" required>
+        </div>
+
+        <div class="form-group">
             <label for="quantity">Kuantitas</label>
             <input type="number" name="quantity" class="form-control" value="{{ $order->quantity }}" required>
         </div>
@@ -29,12 +34,6 @@
             <label for="start_date">Tanggal Mulai</label>
             <input type="datetime-local" name="start_date" class="form-control"
                 value="{{ date('Y-m-d\TH:i', strtotime($order->start_date)) }}" required>
-        </div>
-
-        <div class="form-group">
-            <label for="end_date">Tanggal Selesai</label>
-            <input type="datetime-local" name="end_date" class="form-control"
-                value="{{ $order->end_date ? date('Y-m-d\TH:i', strtotime($order->end_date)) : '' }}">
         </div>
 
         <div class="form-group">

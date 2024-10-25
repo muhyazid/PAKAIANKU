@@ -28,8 +28,9 @@ class Material extends Model
     public function manufacturingOrders()
     {
         return $this->belongsToMany(ManufacturingOrder::class, 'manufacturing_order_materials')
-                    ->withPivot('to_consume', 'quantity', 'consumed')
+                    ->withPivot('to_consume', 'quantity')
                     ->withTimestamps();
     }
+
 
 }

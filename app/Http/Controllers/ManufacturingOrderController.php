@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\BoM;
+use App\Models\Product;
+use App\Models\Material;
 use Illuminate\Http\Request;
 use App\Models\ManufacturingOrder;
-use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class ManufacturingOrderController extends Controller
 {
@@ -24,8 +26,9 @@ class ManufacturingOrderController extends Controller
     public function create()
     {
         //
-        $products = Product::all();
-        return view ('pages.manufacturing_orders.create', compact('products'));
+       $products = Product::all();
+        $materials = Material::all();
+        return view('pages.manufacturing_orders.create', compact('products', 'materials'));
     }
 
     /**
@@ -33,18 +36,45 @@ class ManufacturingOrderController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date',
-            'status' => 'required|in:Draft,Confirmed,Done',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        ManufacturingOrder::create($request->only('product_id', 'quantity', 'start_date', 'end_date', 'status'));
+            $validated = $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'kode_MO' => 'required|string|max:50|unique:manufacturing_orders',
+                'quantity' => 'required|numeric|min:0.01',
+                'start_date' => 'required|date',
+                'status' => 'required|in:Draft,Confirmed,Done',
+                'materials' => 'required|array',
+                'materials.*.material_id' => 'required|exists:materials,id',
+                'materials.*.to_consume' => 'required|numeric|min:0'
+            ]);
 
-        return redirect()->route('manufacturing_orders.index')->with('success', 'Manufacturing Order berhasil ditambahkan.');
+            $order = ManufacturingOrder::create([
+                'product_id' => $validated['product_id'],
+                'kode_MO' => $validated['kode_MO'],
+                'quantity' => $validated['quantity'],
+                'start_date' => $validated['start_date'],
+                'status' => $validated['status']
+            ]);
+
+            // Attach materials with their quantities
+            foreach ($validated['materials'] as $materialId => $materialData) {
+                $order->materials()->attach($materialId, [
+                    'to_consume' => $materialData['to_consume'],
+                    'quantity' => $materialData['to_consume'] // Initial quantity same as to_consume
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('manufacturing_orders.index')
+                           ->with('success', 'Manufacturing Order berhasil dibuat');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                        ->withInput();
+        }
     }
 
     /**
@@ -97,4 +127,32 @@ class ManufacturingOrderController extends Controller
 
         return redirect()->route('manufacturing_orders.index')->with('success', 'Manufacturing Order berhasil dihapus.');
     }
+
+    public function getMaterialsByProduct($productId)
+    {
+         try {
+            $bom = BoM::where('product_id', $productId)
+                     ->with(['materials' => function($query) {
+                         $query->select('materials.*', 'bom_material.quantity', 'bom_material.unit');
+                     }])
+                     ->latest()
+                     ->first();
+
+            if (!$bom) {
+                return response()->json([
+                    'error' => 'Bill of Materials tidak ditemukan untuk produk ini'
+                ], 404);
+            }
+
+            return response()->json([
+                'materials' => $bom->materials
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat mengambil data materials'
+            ], 500);
+        }
+    }
+
 }
