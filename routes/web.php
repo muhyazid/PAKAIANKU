@@ -12,7 +12,7 @@ Route::get('/dashboard', function () {
     return view('pages.dashboard');
 });
 
-// Route::get('/produk', [ProductController::class, 'index']);yazid konnnntoolllll
+// Route::get('/produk', [ProductController::class, 'index']);yazid konnnntoolllllll
 Route::resource('products', ProductController::class);
 
 Route::resource('materials', MaterialController::class);
