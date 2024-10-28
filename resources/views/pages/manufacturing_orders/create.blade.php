@@ -31,14 +31,14 @@
             <input type="datetime-local" name="start_date" class="form-control" required>
         </div>
 
-        <div class="form-group">
+        {{-- <div class="form-group">
             <label for="status">Status</label>
             <select name="status" class="form-control" required>
                 <option value="Draft">Draft</option>
                 <option value="Confirmed">Confirmed</option>
                 <option value="Done">Done</option>
             </select>
-        </div>
+        </div> --}}
 
         <!-- Materials Section -->
         <div class="form-group mt-4">

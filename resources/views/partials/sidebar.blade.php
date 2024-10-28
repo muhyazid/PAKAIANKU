@@ -76,6 +76,16 @@
                 <span class="menu-title">Produk</span>
             </a>
         </li>
+
+        <li class="nav-item menu-items {{ Request::is('suppliers') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ url('/suppliers') }}">
+                <span class="menu-icon">
+                    <i class="mdi mdi-playlist-play"></i>
+                </span>
+                <span class="menu-title">Suppliers</span>
+            </a>
+        </li>
+
         <li class="nav-item menu-items {{ Request::is('material') ? 'active' : '' }}">
             <a class="nav-link" href="{{ url('/materials') }}">
                 <span class="menu-icon">

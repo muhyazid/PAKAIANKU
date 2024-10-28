@@ -22,7 +22,7 @@ class BoM extends Model
     // Model BoM (BoM.php)
     public function product()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Product::class, foreignKey: 'product_id');
     }
 
 }

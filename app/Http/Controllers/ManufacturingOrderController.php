@@ -44,7 +44,6 @@ class ManufacturingOrderController extends Controller
                 'kode_MO' => 'required|string|max:50|unique:manufacturing_orders',
                 'quantity' => 'required|numeric|min:0.01',
                 'start_date' => 'required|date',
-                'status' => 'required|in:Draft,Confirmed,Done',
                 'materials' => 'required|array',
                 'materials.*.material_id' => 'required|exists:materials,id',
                 'materials.*.to_consume' => 'required|numeric|min:0'
@@ -55,14 +54,14 @@ class ManufacturingOrderController extends Controller
                 'kode_MO' => $validated['kode_MO'],
                 'quantity' => $validated['quantity'],
                 'start_date' => $validated['start_date'],
-                'status' => $validated['status']
+                'status' => ManufacturingOrder::STATUS_DRAFT
             ]);
 
             // Attach materials with their quantities
             foreach ($validated['materials'] as $materialId => $materialData) {
                 $order->materials()->attach($materialId, [
                     'to_consume' => $materialData['to_consume'],
-                    'quantity' => $materialData['to_consume'] // Initial quantity same as to_consume
+                    'quantity' => $materialData['to_consume']
                 ]);
             }
 
@@ -152,6 +151,33 @@ class ManufacturingOrderController extends Controller
             return response()->json([
                 'error' => 'Terjadi kesalahan saat mengambil data materials'
             ], 500);
+        }
+    }
+
+    public function checkStock($id)
+    {
+        $order = ManufacturingOrder::with('materials', 'product')->findOrFail($id);
+        $stockStatus = $order->checkMaterialStock();
+        
+        return response()->json($stockStatus);
+    }
+
+    // Method untuk memulai produksi
+    public function startProduction($id)
+    {
+        try {
+            $order = ManufacturingOrder::findOrFail($id);
+            $order->startProduction();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Produksi berhasil dimulai'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
 

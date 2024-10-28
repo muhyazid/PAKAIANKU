@@ -15,7 +15,8 @@ class Material extends Model
         'image',
         'price',
         'product_cost', 
-        'produk_id'
+        'produk_id',
+        'supplier_id',
     ];
 
     public function boms()
@@ -32,5 +33,9 @@ class Material extends Model
                     ->withTimestamps();
     }
 
+    public function suppliers()
+    {
+        return $this->belongsTo(suppliers::class);
+    }
 
 }

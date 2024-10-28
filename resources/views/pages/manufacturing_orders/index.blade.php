@@ -1,3 +1,4 @@
+<!-- Update index.blade.php -->
 @extends('layouts.master')
 
 @section('title', 'Daftar Manufacturing Orders')
@@ -27,6 +28,11 @@
                     <td>{{ $order->start_date }}</td>
                     <td>{{ $order->status }}</td>
                     <td>
+                        @if ($order->status === 'Draft')
+                            <button class="btn btn-info btn-sm check-stock" data-id="{{ $order->id }}">
+                                Cek Stock
+                            </button>
+                        @endif
                         <a href="{{ route('manufacturing_orders.edit', $order->id) }}" class="btn btn-warning btn-sm">Edit</a>
                         <form action="{{ route('manufacturing_orders.destroy', $order->id) }}" method="POST"
                             style="display: inline-block;">
@@ -39,6 +45,128 @@
             @endforeach
         </tbody>
     </table>
+
+    <!-- Modal Cek Stock -->
+    <div class="modal fade" id="stockModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cek Ketersediaan Stock</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="stockStatus"></div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Dibutuhkan</th>
+                                <th>Tersedia</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" id="startProductionBtn" style="display: none;">
+                        Mulai Produksi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                let currentOrderId;
+
+                $('.check-stock').click(function() {
+                    currentOrderId = $(this).data('id');
+                    checkStock(currentOrderId);
+                });
+
+                function checkStock(orderId) {
+                    $.ajax({
+                        url: `/manufacturing-orders/${orderId}/check-stock`,
+                        method: 'GET',
+                        success: function(response) {
+                            updateStockModal(response);
+                            $('#stockModal').modal('show');
+                        },
+                        error: function(xhr) {
+                            alert('Error checking stock');
+                        }
+                    });
+                }
+
+                function updateStockModal(data) {
+                    const tableBody = $('#stockTableBody');
+                    tableBody.empty();
+
+                    if (data.has_sufficient_stock) {
+                        $('#stockStatus').html(
+                            '<div class="alert alert-success">Semua material tersedia</div>'
+                        );
+                        $('#startProductionBtn').show();
+                    } else {
+                        $('#stockStatus').html(
+                            '<div class="alert alert-danger">Beberapa material tidak mencukupi</div>'
+                        );
+                        $('#startProductionBtn').hide();
+                    }
+
+                    // Render sufficient materials
+                    data.sufficient_materials.forEach(item => {
+                        tableBody.append(`
+                        <tr>
+                            <td>${item.material.nama_bahan}</td>
+                            <td>${item.required}</td>
+                            <td>${item.available}</td>
+                            <td><span class="badge badge-success">Tersedia</span></td>
+                        </tr>
+                    `);
+                    });
+
+                    // Render insufficient materials
+                    data.insufficient_materials.forEach(item => {
+                        tableBody.append(`
+                        <tr>
+                            <td>${item.material.nama_bahan}</td>
+                            <td>${item.required}</td>
+                            <td>${item.available}</td>
+                            <td><span class="badge badge-danger">Kurang ${item.shortage}</span></td>
+                        </tr>
+                    `);
+                    });
+                }
+
+                $('#startProductionBtn').click(function() {
+                    if (!confirm('Yakin ingin memulai produksi?')) return;
+
+                    $.ajax({
+                        url: `/manufacturing-orders/${currentOrderId}/start-production`,
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            $('#stockModal').modal('hide');
+                            alert('Produksi berhasil dimulai');
+                            location.reload();
+                        },
+                        error: function(xhr) {
+                            alert('Error: ' + xhr.responseJSON.message);
+                        }
+                    });
+                });
+            });
+        </script>
+    @endpush
 @endsection
 
 
