@@ -13,6 +13,7 @@ class ManufacturingOrder extends Model
 
      // Tambahkan konstanta untuk status
     const STATUS_DRAFT = 'Draft';
+    const STATUS_CONFIRMED = 'Confirmed';
     const STATUS_PRODUCTION = 'Production';
     const STATUS_DONE = 'Done';
     

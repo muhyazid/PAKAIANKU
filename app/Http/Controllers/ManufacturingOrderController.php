@@ -163,22 +163,64 @@ class ManufacturingOrderController extends Controller
     }
 
     // Method untuk memulai produksi
+    // public function startProduction($id)
+    // {
+    //     try {
+    //         $order = ManufacturingOrder::findOrFail($id);
+    //         $order->startProduction();
+            
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Produksi berhasil dimulai'
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => $e->getMessage()
+    //         ], 400);
+    //     }
+    // }
+
+
     public function startProduction($id)
     {
         try {
-            $order = ManufacturingOrder::findOrFail($id);
-            $order->startProduction();
-            
+            $order = ManufacturingOrder::with('materials')->findOrFail($id);
+            $stockCheck = $order->checkMaterialStock();
+
+            if (!$stockCheck['has_sufficient_stock']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stok material tidak mencukupi untuk produksi'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            // Update status menjadi Production
+            $order->status = ManufacturingOrder::STATUS_PRODUCTION;
+            $order->save();
+
+            // Kurangi stok material
+            foreach ($order->materials as $material) {
+                $material->kuantitas -= $material->pivot->to_consume;
+                $material->save();
+            }
+
+            DB::commit();
             return response()->json([
-                'success' => true,
+                'success' => true, 
                 'message' => 'Produksi berhasil dimulai'
             ]);
+
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 400);
+            ], 500);
         }
     }
+
 
 }

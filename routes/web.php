@@ -31,7 +31,8 @@ Route::get('/api/bom-materials/{productId}', [ManufacturingOrderController::clas
 
 // routes/web.php
 Route::get('/manufacturing-orders/{id}/check-stock', [ManufacturingOrderController::class, 'checkStock']);
-Route::post('/manufacturing-orders/{id}/start-production', [ManufacturingOrderController::class, 'startProduction']);
+
+
 
 
 

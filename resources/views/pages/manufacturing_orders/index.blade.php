@@ -1,4 +1,3 @@
-<!-- Update index.blade.php -->
 @extends('layouts.master')
 
 @section('title', 'Daftar Manufacturing Orders')
@@ -47,13 +46,13 @@
     </table>
 
     <!-- Modal Cek Stock -->
-    <div class="modal fade" id="stockModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade" id="stockModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Cek Ketersediaan Stock</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
@@ -96,7 +95,7 @@
                         method: 'GET',
                         success: function(response) {
                             updateStockModal(response);
-                            $('#stockModal').modal('show');
+                            $('#stockModal').modal('show'); // Memastikan modal ditampilkan
                         },
                         error: function(xhr) {
                             alert('Error checking stock');
