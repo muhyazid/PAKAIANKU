@@ -162,24 +162,7 @@ class ManufacturingOrderController extends Controller
         return response()->json($stockStatus);
     }
 
-    // Method untuk memulai produksi
-    // public function startProduction($id)
-    // {
-    //     try {
-    //         $order = ManufacturingOrder::findOrFail($id);
-    //         $order->startProduction();
-            
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Produksi berhasil dimulai'
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => $e->getMessage()
-    //         ], 400);
-    //     }
-    // }
+    
 
 
     public function startProduction($id)

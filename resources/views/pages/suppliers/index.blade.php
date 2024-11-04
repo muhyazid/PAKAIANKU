@@ -31,56 +31,32 @@
                                     <th>Nama Suppliers</th>
                                     <th>No Phone</th>
                                     <th>Alamat</th>
+                                    <th>Material yang disediakan</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($suppliers as $index => $suppliers)
+                                @foreach ($suppliers as $supplier)
                                     <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>{{ $suppliers->nama }}</td>
-                                        <td>{{ $suppliers->no_tlp }}</td>
-                                        <td>{{ $suppliers->alamat }}</td>
-                                        {{-- <td>
-                                            @if ($material->image)
-                                                <img src="{{ asset('storage/' . $material->image) }}" alt="Gambar Bahan"
-                                                    width="50" class="rounded">
-                                            @else
-                                                Tidak ada gambar
-                                            @endif
-                                        </td> --}}
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $supplier->nama }}</td>
+                                        <td>{{ $supplier->no_tlp }}</td>
+                                        <td>{{ $supplier->alamat }}</td>
+                                        <td>{{ $supplier->material ? $supplier->material->nama_bahan : 'Tidak ada material' }}
+                                        </td>
                                         <td>
-                                            <!-- View Button -->
-                                            <a href="#" data-toggle="modal"
-                                                data-target="#viewSuppliersModal-{{ $suppliers->id }}"
-                                                class="btn btn-info btn-sm" title="View" style="margin-right: 5px;">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
-
-                                            <!-- Edit Button -->
-                                            <a href="#" data-toggle="modal"
-                                                data-target="#editSuppliersModal-{{ $suppliers->id }}"
-                                                class="btn btn-warning btn-sm" title="Edit" style="margin-right: 5px;">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </a>
-
-                                            <!-- Delete Button -->
-                                            <form action="{{ route('suppliers.destroy', $suppliers->id) }}" method="POST"
-                                                style="display:inline-block;" onsubmit="return confirmDelete(event)">
+                                            <!-- Tombol Aksi (View, Edit, Delete) -->
+                                            <a href="#" class="btn btn-info btn-sm" title="View">View</a>
+                                            <a href="#" class="btn btn-warning btn-sm" title="Edit">Edit</a>
+                                            <form action="{{ route('suppliers.destroy', $supplier->id) }}" method="POST"
+                                                style="display:inline-block;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
+                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('Yakin ingin menghapus?')">Delete</button>
                                             </form>
                                         </td>
                                     </tr>
-
-                                    <!-- Modal View Material -->
-                                    @include('pages.suppliers.view', ['suppliers' => $suppliers])
-
-                                    <!-- Modal Edit Material -->
-                                    @include('pages.suppliers.edit', ['suppliers' => $suppliers])
                                 @endforeach
                             </tbody>
                         </table>

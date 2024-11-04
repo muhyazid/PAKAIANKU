@@ -11,15 +11,6 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    {{-- <!-- Bagian Kiri: Gambar -->
-                    <div class="col-md-4">
-                        @if ($suppliers->image)
-                            <img src="{{ asset('storage/' . $suppliers->image) }}" alt="Gambar Bahan"
-                                style="width: 100%; border-radius: 5px;">
-                        @else
-                            <div><strong>Gambar:</strong> Tidak ada gambar</div>
-                        @endif
-                    </div> --}}
                     <!-- Bagian Kanan: Informasi -->
                     <div class="col-md-8">
                         <div class="text-light"><strong>Name:</strong> {{ $suppliers->nama }}</div>

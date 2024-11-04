@@ -16,7 +16,7 @@ class Material extends Model
         'price',
         'product_cost', 
         'produk_id',
-        'supplier_id',
+        'id_supplier',
     ];
 
     public function boms()
@@ -35,7 +35,11 @@ class Material extends Model
 
     public function suppliers()
     {
-        return $this->belongsTo(suppliers::class);
+        return $this->hasMany(Suppliers::class, 'material_id');
     }
 
+    public function supplier()
+    {
+        return $this->belongsTo(Suppliers::class, 'id_supplier');
+    }
 }

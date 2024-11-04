@@ -78,7 +78,7 @@
         </li>
 
         <li class="nav-item menu-items {{ Request::is('suppliers') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ url('/suppliers') }}">
+            <a class="nav-link" href="{{ route('suppliers.index') }}">
                 <span class="menu-icon">
                     <i class="mdi mdi-playlist-play"></i>
                 </span>
@@ -112,6 +112,18 @@
                 <span class="menu-title">Manufacturing Order</span>
             </a>
         </li>
+
+
+        <li class="nav-item menu-items {{ Request::is('rfq*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('rfq.index') }}">
+                <span class="menu-icon">
+                    <i class="mdi mdi-playlist-play"></i>
+                </span>
+                <span class="menu-title">RfQ</span>
+            </a>
+        </li>
+
+
 
         <li class="nav-item menu-items">
             <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">

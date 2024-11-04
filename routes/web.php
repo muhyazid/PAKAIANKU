@@ -6,7 +6,10 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\SuppliersController;
 use App\Http\Controllers\ManufacturingOrderController;
-use App\Models\Suppliers;
+use App\Http\Controllers\RfQController;
+
+Route::resource('rfq', RfQController::class);
+
 
 Route::get('/dashboard', function () {
     return view('pages.dashboard');
@@ -32,11 +35,6 @@ Route::get('/api/bom-materials/{productId}', [ManufacturingOrderController::clas
 // routes/web.php
 Route::get('/manufacturing-orders/{id}/check-stock', [ManufacturingOrderController::class, 'checkStock']);
 
+Route::resource('rfq', RfqController::class);
 
-
-
-
-
-
-
-
+Route::get('/supplier/{id}/materials', [RfqController::class, 'getMaterialsBySupplier']);

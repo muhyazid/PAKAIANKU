@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Material;
 use App\Models\Suppliers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -14,10 +15,10 @@ class SuppliersController extends Controller
     public function index()
     {
         // Ambil semua data material dari database, urutkan berdasarkan ID atau created_at
-        $suppliers = Suppliers::orderBy('created_at', 'asc')->get();
-
+        $suppliers = Suppliers::with('material')->orderBy('created_at', 'asc')->get();
+        $materials = Material::all();
         // Kirimkan variabel $materials ke view 'materials.index'
-        return view('pages.suppliers.index', compact('suppliers'));
+        return view('pages.suppliers.index', compact('suppliers', 'materials'));
     }
 
     /**
@@ -25,9 +26,9 @@ class SuppliersController extends Controller
      */
     public function create()
     {
-        //
+        $materials = Material::all();
         // Tampilkan form tambah material
-        return view('pages.suppliers.create');
+        return view('pages.suppliers.create', compact('materials'));
     }
 
     /**
@@ -40,19 +41,16 @@ class SuppliersController extends Controller
             'nama' => 'required|max:255',
             'no_tlp' => 'required||max:15',
             'alamat' => 'required',
+            'material_id' => 'required|exists:materials,id',
         ]);
 
-         // Handle upload gambar jika ada
-        // $imagePath = null;
-        // if ($request->hasFile('image')) {
-        //     $imagePath = $request->file('image')->store('materials', 'public');
-        // }
 
         // Simpan data material ke database
         Suppliers::create([
             'nama' => $request->nama,
             'no_tlp' => $request->no_tlp,
             'alamat' => $request->alamat,
+            'material_id' => $request->material_id,
         ]);
 
         return redirect()->route('suppliers.index')->with('success', 'Suppliers berhasil ditambahkan!');
@@ -73,7 +71,8 @@ class SuppliersController extends Controller
     {
         // Ambil data material berdasarkan ID
         $suppliers = Suppliers::findOrFail($id);
-        return view('pages.suppliers.edit', compact('suppliers'));
+        $materials = Material::all();
+        return view('pages.suppliers.edit', compact('suppliers', 'materials'));
     }
 
     /**
@@ -83,30 +82,21 @@ class SuppliersController extends Controller
     {
         // Validasi field yang dibutuhkan
         $request->validate([
-        'nama' => 'required|max:255',
+            'nama' => 'required|max:255',
             'no_tlp' => 'required||max:15',
             'alamat' => 'required',
+            'material_id' => 'required|exists:materials,id',
         ]);
 
         // Temukan data material
-        $suppliers = Suppliers::findOrFail($id);
+        $supplier = Suppliers::findOrFail($id);
 
-        // Handle upload gambar baru jika ada
-        // if ($request->hasFile('image')) {
-        //     // Hapus gambar lama jika ada
-        //     if ($material->image) {
-        //         Storage::delete('public/' . $material->image);
-        //     }
-        //     $imagePath = $request->file('image')->store('materials', 'public');
-        //     $material->image = $imagePath;
-        // }
-
-        // Perbarui field lainnya
-        $suppliers->nama = $request->nama;
-        $suppliers->no_tlp = $request->no_tlp;
-        $suppliers->alamat = $request->alamat;
-        
-        $suppliers->save();
+        $supplier->update([
+            'nama' => $request->nama,
+            'no_tlp' => $request->no_tlp,
+            'alamat' => $request->alamat,
+            'material_id' => $request->material_id,
+        ]);
 
         return redirect()->route('suppliers.index')->with('success', 'Suppliers berhasil diupdate!');
     }
@@ -117,8 +107,8 @@ class SuppliersController extends Controller
     public function destroy(string $id)
     {
         // Hapus data material
-        $suppliers = Suppliers::findOrFail($id);
-        $suppliers->delete();
+        $supplier = Suppliers::findOrFail($id);
+        $supplier->delete();
         return redirect()->route('suppliers.index')->with('success', 'Suppliers berhasil dihapus!');
     }
 }
