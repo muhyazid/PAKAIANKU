@@ -1,85 +1,150 @@
 @extends('layouts.master')
 
+@section('title', 'Tambah RFQ')
+
 @section('content')
-    <div class="container">
-        <h3>Tambah RFQ</h3>
-        <form action="{{ route('rfq.store') }}" method="POST">
-            @csrf
-            <div class="form-group">
-                <label>Pilih Vendor</label>
-                <select name="supplier_id" class="form-control" id="supplier" required>
-                    <option value="">Pilih Supplier</option>
-                    @foreach ($suppliers as $supplier)
-                        <option value="{{ $supplier->id }}">{{ $supplier->nama }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Kode RFQ</label>
-                <input type="text" name="kode_rfq" class="form-control" required>
-            </div>
-
-            <div class="form-group">
-                <label>Tanggal Penawaran</label>
-                <input type="datetime-local" name="tanggal_penawaran" class="form-control" required>
-            </div>
-
-            <h5>Daftar Material</h5>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Material</th>
-                        <th>Spesifikasi</th>
-                        <th>Satuan</th>
-                        <th>Kuantitas</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="material-list">
-                    <!-- Material rows will be appended here by JavaScript -->
-                </tbody>
-            </table>
-
-            <button type="submit" class="btn btn-primary">Simpan</button>
-        </form>
+    <div class="page-header">
+        <h3 class="page-title text-light">Tambah Request for Quotation (RFQ)</h3>
     </div>
 
-    <script>
-        document.getElementById('supplier').addEventListener('change', function() {
-            const supplierId = this.value;
-            const materialList = document.getElementById('material-list');
+    {{-- Main Form Card --}}
+    <div class="card">
+        <div class="card-body">
+            {{-- Form with validation errors handling --}}
+            <form action="{{ route('rfq.store') }}" method="POST">
+                @csrf
 
-            // Clear the material list
-            materialList.innerHTML = '';
+                {{-- RFQ Code Field - Auto-generated and readonly --}}
+                <div class="form-group">
+                    <label for="rfq_code" class="text-light">Kode RFQ</label>
+                    <input type="text" class="form-control @error('rfq_code') is-invalid @enderror" name="rfq_code"
+                        value="{{ $rfqCode }}" readonly>
+                    @error('rfq_code')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-            if (supplierId) {
-                // Fetch materials by supplier
-                fetch(`/supplier/${supplierId}/materials`)
-                    .then(response => response.json())
-                    .then(data => {
-                        // Populate the material list with the fetched data
-                        data.forEach((material, index) => {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${material.nama_bahan}</td>
-                                <td><input type="text" name="materials[${index}][spesifikasi]" class="form-control" required></td>
-                                <td><input type="text" name="materials[${index}][satuan]" class="form-control" value="${material.satuan}" required></td>
-                                <td><input type="number" name="materials[${index}][kuantitas]" class="form-control" required></td>
-                                <td><button type="button" class="btn btn-danger remove-material">Hapus</button></td>
-                            `;
-                            materialList.appendChild(row);
-                        });
-                    })
-                    .catch(error => console.error('Error fetching materials:', error));
-            }
-        });
+                {{-- Supplier Selection --}}
+                <div class="form-group">
+                    <label for="supplier_id" class="text-light">Supplier</label>
+                    <select name="supplier_id" class="form-control @error('supplier_id') is-invalid @enderror" required>
+                        <option value="">Pilih Supplier</option>
+                        @foreach ($suppliers as $supplier)
+                            <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                {{ $supplier->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('supplier_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
-        // Function to remove a material row
-        document.getElementById('material-list').addEventListener('click', function(event) {
-            if (event.target.classList.contains('remove-material')) {
-                event.target.closest('tr').remove();
-            }
-        });
-    </script>
+                {{-- Quotation Date --}}
+                <div class="form-group">
+                    <label for="quotation_date" class="text-light">Tanggal Penawaran</label>
+                    <input type="date" class="form-control @error('quotation_date') is-invalid @enderror"
+                        name="quotation_date" value="{{ old('quotation_date') }}" required>
+                    @error('quotation_date')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                {{-- Materials Section --}}
+                <h4 class="text-light mt-4">Material yang Diminta</h4>
+                <div class="table-responsive">
+                    <table class="table table-dark" id="materials-table">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Jumlah</th>
+                                <th>Satuan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <select name="materials[0][material_id]" class="form-control" required>
+                                        <option value="">Pilih Material</option>
+                                        @foreach ($materials as $material)
+                                            <option value="{{ $material->id }}">{{ $material->nama_bahan }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="materials[0][quantity]" class="form-control" step="0.01"
+                                        required>
+                                </td>
+                                <td>
+                                    <select name="materials[0][unit]" class="form-control" required>
+                                        <option value="gram">gram</option>
+                                        <option value="meter">meter</option>
+                                        <option value="pcs">pcs</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-success btn-add-row">+</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Submit Button --}}
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <a href="{{ route('rfq.index') }}" class="btn btn-secondary">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- JavaScript for Dynamic Form Fields --}}
+    @push('scripts')
+        <script>
+            // Initialize row counter
+            let rowCount = 1;
+
+            // Add new material row
+            document.querySelector('.btn-add-row').addEventListener('click', function() {
+                let table = document.querySelector('#materials-table tbody');
+                let newRow = document.createElement('tr');
+
+                // Generate new row HTML with incremented index
+                newRow.innerHTML = `
+                <td>
+                    <select name="materials[${rowCount}][material_id]" class="form-control" required>
+                        <option value="">Pilih Material</option>
+                        @foreach ($materials as $material)
+                            <option value="{{ $material->id }}">{{ $material->nama_bahan }}</option>
+                        @endforeach
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="materials[${rowCount}][quantity]" class="form-control" 
+                           step="0.01" required>
+                </td>
+                <td>
+                    <select name="materials[${rowCount}][unit]" class="form-control" required>
+                        <option value="gram">gram</option>
+                        <option value="meter">meter</option>
+                        <option value="pcs">pcs</option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-remove-row">-</button>
+                </td>
+            `;
+
+                // Add the new row to the table
+                table.appendChild(newRow);
+                rowCount++;
+                // Add event listener to remove button
+                newRow.querySelector('.btn-remove-row').addEventListener('click', function() {
+                    this.closest('tr').remove();
+                });
+            });
+        </script>
+    @endpush
 @endsection

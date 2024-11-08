@@ -35,6 +35,11 @@ Route::get('/api/bom-materials/{productId}', [ManufacturingOrderController::clas
 // routes/web.php
 Route::get('/manufacturing-orders/{id}/check-stock', [ManufacturingOrderController::class, 'checkStock']);
 
+
+// routes/web.php
+
+// Route resource untuk operasi CRUD RFQ
 Route::resource('rfq', RfqController::class);
 
-Route::get('/supplier/{id}/materials', [RfqController::class, 'getMaterialsBySupplier']);
+// Route khusus untuk update status RFQ
+Route::patch('rfq/{id}/status', [RfqController::class, 'updateStatus'])->name('rfq.updateStatus');

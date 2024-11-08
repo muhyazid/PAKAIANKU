@@ -5,10 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RfqMaterial extends Model
+class RfqItem extends Model
 {
     use HasFactory;
-    protected $fillable = ['rfq_id', 'material_id', 'spesifikasi', 'satuan', 'kuantitas'];
+    protected $table = 'rfq_items';
+    
+    protected $fillable = [
+        'rfq_id',
+        'material_id',
+        'quantity',
+        'unit'
+    ];
 
     public function rfq()
     {

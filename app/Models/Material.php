@@ -38,8 +38,8 @@ class Material extends Model
         return $this->hasMany(Suppliers::class, 'material_id');
     }
 
-    public function supplier()
-    {
-        return $this->belongsTo(Suppliers::class, 'id_supplier');
-    }
+    // public function supplier()
+    // {
+    //     return $this->belongsTo(Suppliers::class, 'id_supplier');
+    // }
 }

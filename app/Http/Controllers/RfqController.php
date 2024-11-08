@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rfq;
-use App\Models\RfqMaterial;
-use App\Models\Suppliers;
 use App\Models\Material;
+use App\Models\Suppliers;
 use Illuminate\Http\Request;
 
 class RfqController extends Controller
@@ -16,7 +15,7 @@ class RfqController extends Controller
     public function index()
     {
         //
-        $rfqs = Rfq::with('supplier')->get(); // Ambil data RFQ dengan relasi supplier
+        $rfqs = Rfq::with(['supplier', 'items.material'])->get();
         return view('pages.rfq.index', compact('rfqs'));
     }
 
@@ -26,8 +25,16 @@ class RfqController extends Controller
     public function create()
     {
         //
-        $suppliers = Suppliers::with('materials')->get(); // Ambil data supplier beserta material
-        return view('pages.rfq.create', compact('suppliers'));
+        $suppliers = Suppliers::all();
+        $materials = Material::all();
+        
+        // Generate RFQ Code
+        $lastRfq = Rfq::latest()->first();
+        $lastNumber = $lastRfq ? intval(substr($lastRfq->rfq_code, 3)) : 0;
+        $newNumber = $lastNumber + 1;
+        $rfqCode = 'RFQ' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+        
+        return view('pages.rfq.create', compact('suppliers', 'materials', 'rfqCode'));
     }
 
     /**
@@ -37,98 +44,118 @@ class RfqController extends Controller
     {
         //
         $request->validate([
-            'kode_rfq' => 'required',
+            'rfq_code' => 'required|unique:rfqs,rfq_code',
             'supplier_id' => 'required|exists:suppliers,id',
-            'tanggal_penawaran' => 'required|date',
+            'quotation_date' => 'required|date',
+            'materials' => 'required|array|min:1',
             'materials.*.material_id' => 'required|exists:materials,id',
-            'materials.*.spesifikasi' => 'required',
-            'materials.*.satuan' => 'required',
-            'materials.*.kuantitas' => 'required|numeric|min:0',
+            'materials.*.quantity' => 'required|numeric|min:0.01',
+            'materials.*.unit' => 'required|string'
         ]);
 
-        $rfq = Rfq::create($request->only(['kode_rfq', 'supplier_id', 'tanggal_penawaran']));
+        // Create RFQ
+        $rfq = Rfq::create([
+            'rfq_code' => $request->rfq_code,
+            'supplier_id' => $request->supplier_id,
+            'quotation_date' => $request->quotation_date,
+            'status' => 'pending'
+        ]);
 
+        // Create RFQ Items
         foreach ($request->materials as $material) {
-            RfqMaterial::create([
-                'rfq_id' => $rfq->id,
+            $rfq->items()->create([
                 'material_id' => $material['material_id'],
-                'spesifikasi' => $material['spesifikasi'],
-                'satuan' => $material['satuan'],
-                'kuantitas' => $material['kuantitas'],
+                'quantity' => $material['quantity'],
+                'unit' => $material['unit']
             ]);
         }
 
-        return redirect()->route('rfq.index')->with('success', 'RFQ berhasil ditambahkan!');
+        return redirect()->route('rfq.index')->with('success', 'RFQ berhasil dibuat.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Rfq $rfq)
+    public function show(string $id)
     {
         //
-        $rfq->load('rfqMaterials.material');
-        return view('pages.rfq.show', compact('rfq'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Rfq $rfq)
+    public function edit(string $id)
     {
         //
-        $suppliers = Suppliers::with('materials')->get();
-        $rfq->load('rfqMaterials');
-        return view('pages.rfq.edit', compact('rfq', 'suppliers'));
+        $rfq = Rfq::with('items')->findOrFail($id);
+        $suppliers = Suppliers::all();
+        $materials = Material::all();
+        return view('pages.rfq.edit', compact('rfq', 'suppliers', 'materials'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id, Rfq $rfq)
+    public function update(Request $request, string $id)
     {
         //
         $request->validate([
-            'kode_rfq' => 'required',
+            'rfq_code' => 'required|unique:rfqs,rfq_code,'.$id,
             'supplier_id' => 'required|exists:suppliers,id',
-            'tanggal_penawaran' => 'required|date',
+            'quotation_date' => 'required|date',
+            'materials' => 'required|array|min:1',
             'materials.*.material_id' => 'required|exists:materials,id',
-            'materials.*.spesifikasi' => 'required',
-            'materials.*.satuan' => 'required',
-            'materials.*.kuantitas' => 'required|numeric|min:0',
+            'materials.*.quantity' => 'required|numeric|min:0.01',
+            'materials.*.unit' => 'required|string'
         ]);
 
-        $rfq->update($request->only(['kode_rfq', 'supplier_id', 'tanggal_penawaran']));
+        $rfq = Rfq::findOrFail($id);
         
-        RfqMaterial::where('rfq_id', $rfq->id)->delete();
+        // Update RFQ
+        $rfq->update([
+            'rfq_code' => $request->rfq_code,
+            'supplier_id' => $request->supplier_id,
+            'quotation_date' => $request->quotation_date
+        ]);
 
+        // Delete existing items
+        $rfq->items()->delete();
+
+        // Create new items
         foreach ($request->materials as $material) {
-            RfqMaterial::create([
-                'rfq_id' => $rfq->id,
+            $rfq->items()->create([
                 'material_id' => $material['material_id'],
-                'spesifikasi' => $material['spesifikasi'],
-                'satuan' => $material['satuan'],
-                'kuantitas' => $material['kuantitas'],
+                'quantity' => $material['quantity'],
+                'unit' => $material['unit']
             ]);
         }
 
-        return redirect()->route('rfq.index')->with('success', 'RFQ berhasil diperbarui!');
+        return redirect()->route('rfq.index')->with('success', 'RFQ berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Rfq $rfq)
+    public function destroy(string $id)
     {
         //
+        $rfq = Rfq::findOrFail($id);
+        $rfq->items()->delete();
         $rfq->delete();
-        return redirect()->route('rfq.index')->with('success', 'RFQ berhasil dihapus!');
+        return redirect()->route('rfq.index')->with('success', 'RFQ berhasil dihapus.');
     }
 
-    public function getMaterialsBySupplier($id)
+    public function updateStatus(Request $request, $id)
     {
-        $materials = Suppliers::find($id)->materials;
-        return response()->json($materials);
+        $request->validate([
+            'status' => 'required|in:pending,approved,confirmed'
+        ]);
+
+        $rfq = Rfq::findOrFail($id);
+        $rfq->update(['status' => $request->status]);
+
+        return redirect()->route('rfq.index')->with('success', 'Status RFQ berhasil diperbarui.');
     }
 
 }
+

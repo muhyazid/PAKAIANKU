@@ -1,6 +1,15 @@
 <form action="{{ route('suppliers.store') }}" method="POST">
     @csrf
     <div class="container-fluid">
+        <style>
+            /* Ensure labels are visible against a dark background */
+            .form-group label {
+                color: #f0f0f0;
+                /* Adjust color to a light shade for better contrast */
+                font-weight: 600;
+                /* Optional: make the text a bit bolder */
+            }
+        </style>
         <div class="row">
             <div class="col-md-12">
                 <h5 class="modal-title mb-3">Tambah Supplier Baru</h5>

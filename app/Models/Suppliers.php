@@ -15,14 +15,10 @@ class Suppliers extends Model
         return $this->belongsTo(Material::class, 'material_id');
     }
 
-    public function materials()
-    {
-        return $this->hasMany(Material::class, 'supplier_id');
-    }
+    // public function materials()
+    // {
+    //     return $this->hasMany(Material::class, 'supplier_id');
+    // }
 
-    public function rfqs()
-    {
-        return $this->hasMany(Rfq::class);
-    }
     
 }

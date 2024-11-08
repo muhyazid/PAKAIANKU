@@ -4,83 +4,115 @@
 
 @section('content')
     <div class="page-header">
-        <h3 class="page-title">Edit RFQ</h3>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="#">RFQ</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Edit RFQ</li>
-            </ol>
-        </nav>
+        <h3 class="page-title text-light">Edit Request for Quotation (RFQ)</h3>
     </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Edit RFQ</h4>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ route('rfq.update', $rfq->id) }}" method="POST">
+                @csrf
+                @method('PUT')
 
-                    <form action="{{ route('rfq.update', $rfq->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-
-                        <div class="form-group">
-                            <label for="kode_rfq">Kode RFQ</label>
-                            <input type="text" name="kode_rfq" id="kode_rfq" class="form-control"
-                                value="{{ $rfq->kode_rfq }}" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="supplier_id">Pilih Supplier</label>
-                            <select name="supplier_id" id="supplier_id" class="form-control" required>
-                                <option value="">Pilih Supplier</option>
-                                @foreach ($suppliers as $supplier)
-                                    <option value="{{ $supplier->id }}"
-                                        {{ $rfq->supplier_id == $supplier->id ? 'selected' : '' }}>
-                                        {{ $supplier->nama }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="tanggal">Tanggal</label>
-                            <input type="date" name="tanggal" id="tanggal" class="form-control"
-                                value="{{ $rfq->tanggal }}" required>
-                        </div>
-
-                        <h5>Materials Required</h5>
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Material</th>
-                                    <th>Spesifikasi</th>
-                                    <th>Satuan</th>
-                                    <th>Kuantitas</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($rfq->materials as $material)
-                                    <tr>
-                                        <td>{{ $material->nama_bahan }}</td>
-                                        <td><input type="text" name="materials[{{ $material->id }}][spesifikasi]"
-                                                class="form-control" value="{{ $material->pivot->spesifikasi }}"></td>
-                                        <td>{{ $material->satuan }}</td>
-                                        <td><input type="number" name="materials[{{ $material->id }}][kuantitas]"
-                                                class="form-control" value="{{ $material->pivot->kuantitas }}"></td>
-                                        <td>
-                                            <button type="button" class="btn btn-danger btn-sm">Hapus</button>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-
-                        <button type="submit" class="btn btn-primary mt-3">Simpan Perubahan</button>
-                        <a href="{{ route('rfq.index') }}" class="btn btn-secondary mt-3">Batal</a>
-                    </form>
+                {{-- Similar form fields as create.blade.php but with existing values --}}
+                <div class="form-group">
+                    <label for="rfq_code" class="text-light">Kode RFQ</label>
+                    <input type="text" class="form-control" name="rfq_code" value="{{ $rfq->rfq_code }}" readonly>
                 </div>
-            </div>
+
+                <div class="form-group">
+                    <label for="supplier_id" class="text-light">Supplier</label>
+                    <select name="supplier_id" class="form-control" required>
+                        <option value="">Pilih Supplier</option>
+                        @foreach ($suppliers as $supplier)
+                            <option value="{{ $supplier->id }}" {{ $rfq->supplier_id == $supplier->id ? 'selected' : '' }}>
+                                {{ $supplier->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="quotation_date" class="text-light">Tanggal Penawaran</label>
+                    <input type="date" class="form-control" name="quotation_date"
+                        value="{{ $rfq->quotation_date->format('Y-m-d') }}" required>
+                </div>
+
+                <h4 class="text-light mt-4">Material yang Diminta</h4>
+                <table class="table table-dark" id="materials-table">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Jumlah</th>
+                            <th>Satuan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($rfq->items as $index => $item)
+                            <tr>
+                                <td>
+                                    <select name="materials[{{ $index }}][material_id]" class="form-control"
+                                        required>
+                                        <option value="">Pilih Material</option>
+                                        @foreach ($materials as $material)
+                                            <option value="{{ $material->id }}"
+                                                {{ $item->material_id == $material->id ? 'selected' : '' }}>
+                                                {{ $material->nama_bahan }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="materials[{{ $index }}][quantity]"
+                                        value="{{ $item->quantity }}" class="form-control" step="0.01" required>
+                                </td>
+                                <td>
+                                    <select name="materials[{{ $index }}][unit]" class="form-control" required>
+                                        @foreach (['gram', 'meter', 'pcs'] as $unit)
+                                            <option value="{{ $unit }}"
+                                                {{ $item->unit == $unit ? 'selected' : '' }}>
+                                                {{ $unit }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    @if ($index == 0)
+                                        <button type="button" class="btn btn-success btn-add-row">+</button>
+                                    @else
+                                        <button type="button" class="btn btn-danger btn-remove-row">-</button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <a href="{{ route('rfq.index') }}" class="btn btn-secondary">Batal</a>
+                </div>
+            </form>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            // Similar JavaScript as create.blade.php for dynamic rows
+            let rowCount = {{ count($rfq->items) }};
+
+            // Add new material row functionality
+            document.querySelector('.btn-add-row').addEventListener('click', function() {
+                // Similar implementation as in create.blade.php
+                // ...
+            });
+
+            // Remove row functionality for existing remove buttons
+            document.querySelectorAll('.btn-remove-row').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('tr').remove();
+                });
+            });
+        </script>
+    @endpush
 @endsection
