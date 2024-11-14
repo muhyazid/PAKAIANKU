@@ -26,7 +26,7 @@ class RfqController extends Controller
     {
         //
         $suppliers = Suppliers::all();
-        $materials = Material::all();
+        $materials = Material::select('id', 'nama_bahan', 'price')->get();
         
         // Generate RFQ Code
         $lastRfq = Rfq::latest()->first();
@@ -61,12 +61,19 @@ class RfqController extends Controller
             'status' => 'pending'
         ]);
 
-        // Create RFQ Items
+        // Tambahkan item RFQ
         foreach ($request->materials as $material) {
+            $materialModel = Material::find($material['material_id']);
+            $material_price = $materialModel->price;           // Ambil harga material dari tabel materials
+            $subtotal = $material_price * $material['quantity']; // Hitung subtotal
+
+            // Simpan item RFQ
             $rfq->items()->create([
                 'material_id' => $material['material_id'],
                 'quantity' => $material['quantity'],
-                'unit' => $material['unit']
+                'unit' => $material['unit'],
+                'material_price' => $material_price, // Simpan harga material
+                'subtotal' => $subtotal              // Simpan subtotal
             ]);
         }
 
@@ -118,15 +125,21 @@ class RfqController extends Controller
             'quotation_date' => $request->quotation_date
         ]);
 
-        // Delete existing items
+         // Hapus item yang ada sebelumnya
         $rfq->items()->delete();
 
-        // Create new items
         foreach ($request->materials as $material) {
+            $materialModel = Material::find($material['material_id']);
+            $material_price = $materialModel->price;           // Ambil harga material
+            $subtotal = $material_price * $material['quantity']; // Hitung subtotal
+
+            // Simpan item RFQ
             $rfq->items()->create([
                 'material_id' => $material['material_id'],
                 'quantity' => $material['quantity'],
-                'unit' => $material['unit']
+                'unit' => $material['unit'],
+                'material_price' => $material_price, // Simpan harga material
+                'subtotal' => $subtotal              // Simpan subtotal
             ]);
         }
 

@@ -11,7 +11,7 @@ use App\Http\Controllers\RfQController;
 Route::resource('rfq', RfQController::class);
 
 
-Route::get('/dashboard', function () {
+Route::get('/dashboard', function ()  {
     return view('pages.dashboard');
 });
 

@@ -1,0 +1,18 @@
+/* Memperbaiki input untuk harga dan total */
+.price-input,
+.subtotal-input {
+    color: #ffffff; /* Warna teks putih */
+    background-color: #333333; /* Latar belakang gelap */
+    border: 1px solid #555555; /* Border agar terlihat jelas */
+    padding: 8px 10px; /* Memberi jarak dalam input agar lebih enak dilihat */
+    font-size: 14px; /* Ukuran font agar lebih besar dan lebih jelas */
+}
+
+/* Untuk input yang readonly */
+.price-input[readonly],
+.subtotal-input[readonly] {
+    color: #ffffff !important; /* Warna teks putih */
+    background-color: #333333 !important; /* Latar belakang tetap gelap */
+    opacity: 1 !important; /* Pastikan input tetap terlihat */
+    border: 1px solid #777777; /* Border lebih tegas */
+}
