@@ -57,6 +57,7 @@ class MaterialController extends Controller
             'satuan' => $request->satuan,
             'price' => $request->price, 
             'image' => $imagePath,
+            'stock' => 0,
         ]);
 
         return redirect()->route('materials.index')->with('success', 'Material berhasil ditambahkan!');

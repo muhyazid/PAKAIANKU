@@ -14,7 +14,6 @@ class RfqItem extends Model
         'rfq_id',
         'material_id',
         'quantity',
-        'unit',
         'material_price',  // Menyimpan harga satuan dari material
         'subtotal' 
     ];

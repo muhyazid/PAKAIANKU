@@ -31,6 +31,7 @@
                                     <th>Kuantitas</th>
                                     <th>Satuan</th>
                                     <th>Price</th>
+                                    <th>Stock</th>
                                     <th>Gambar</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -43,6 +44,7 @@
                                         <td>{{ $material->kuantitas }}</td>
                                         <td>{{ $material->satuan }}</td>
                                         <td>{{ $material->price }}</td>
+                                        <td>{{ $material->stock }}</td>
                                         <td>
                                             @if ($material->image)
                                                 <img src="{{ asset('storage/' . $material->image) }}" alt="Gambar Bahan"

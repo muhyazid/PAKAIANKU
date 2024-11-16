@@ -14,9 +14,8 @@ class Material extends Model
         'satuan', 
         'image',
         'price',
-        'product_cost', 
-        'produk_id',
-        'id_supplier',
+        'stock',
+
     ];
 
     public function boms()

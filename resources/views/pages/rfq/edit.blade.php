@@ -43,7 +43,6 @@
                         <tr>
                             <th>Material</th>
                             <th>Jumlah</th>
-                            <th>Satuan</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -65,16 +64,6 @@
                                 <td>
                                     <input type="number" name="materials[{{ $index }}][quantity]"
                                         value="{{ $item->quantity }}" class="form-control" step="0.01" required>
-                                </td>
-                                <td>
-                                    <select name="materials[{{ $index }}][unit]" class="form-control" required>
-                                        @foreach (['gram', 'meter', 'pcs'] as $unit)
-                                            <option value="{{ $unit }}"
-                                                {{ $item->unit == $unit ? 'selected' : '' }}>
-                                                {{ $unit }}
-                                            </option>
-                                        @endforeach
-                                    </select>
                                 </td>
                                 <td>
                                     @if ($index == 0)

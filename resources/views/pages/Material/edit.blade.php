@@ -62,6 +62,11 @@
                                     <input type="text" name="satuan" class="form-control" id="satuan"
                                         value="{{ $material->satuan }}" required>
                                 </div>
+                                <div class="form-group">
+                                    <label for="stock" class="text-light">Stock</label>
+                                    <input type="number" name="stock" class="form-control" id="stock"
+                                        value="{{ $material->stock }}" readonly>
+                                </div>
                             </div>
                         </div>
                     </div>

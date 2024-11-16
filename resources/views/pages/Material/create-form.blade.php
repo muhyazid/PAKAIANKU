@@ -37,6 +37,10 @@
                     <label for="satuan">Satuan</label>
                     <input type="text" name="satuan" class="form-control" id="satuan" required>
                 </div>
+                <div class="form-group">
+                    <label for="stock">Stock</label>
+                    <input type="number" name="stock" class="form-control" id="stock" value="0" readonly>
+                </div>
             </div>
         </div>
     </div>

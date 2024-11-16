@@ -14,8 +14,7 @@ class Rfq extends Model
         'rfq_code',
         'supplier_id',
         'quotation_date',
-        'status',
-        'notes'
+        'status'
     ];
 
     protected $casts = [

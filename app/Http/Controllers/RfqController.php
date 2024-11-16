@@ -50,7 +50,7 @@ class RfqController extends Controller
             'materials' => 'required|array|min:1',
             'materials.*.material_id' => 'required|exists:materials,id',
             'materials.*.quantity' => 'required|numeric|min:0.01',
-            'materials.*.unit' => 'required|string'
+
         ]);
 
         // Create RFQ
@@ -71,7 +71,6 @@ class RfqController extends Controller
             $rfq->items()->create([
                 'material_id' => $material['material_id'],
                 'quantity' => $material['quantity'],
-                'unit' => $material['unit'],
                 'material_price' => $material_price, // Simpan harga material
                 'subtotal' => $subtotal              // Simpan subtotal
             ]);
@@ -112,8 +111,7 @@ class RfqController extends Controller
             'quotation_date' => 'required|date',
             'materials' => 'required|array|min:1',
             'materials.*.material_id' => 'required|exists:materials,id',
-            'materials.*.quantity' => 'required|numeric|min:0.01',
-            'materials.*.unit' => 'required|string'
+            'materials.*.quantity' => 'required|numeric|min:0.01'
         ]);
 
         $rfq = Rfq::findOrFail($id);
@@ -137,7 +135,6 @@ class RfqController extends Controller
             $rfq->items()->create([
                 'material_id' => $material['material_id'],
                 'quantity' => $material['quantity'],
-                'unit' => $material['unit'],
                 'material_price' => $material_price, // Simpan harga material
                 'subtotal' => $subtotal              // Simpan subtotal
             ]);
