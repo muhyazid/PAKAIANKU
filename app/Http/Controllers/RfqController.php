@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Rfq;
 use App\Models\Material;
+use Barryvdh\DomPDF\PDF;
 use App\Models\Suppliers;
 use Illuminate\Http\Request;
+use App\Models\PaymentRecord;
 
 class RfqController extends Controller
 {
@@ -58,20 +60,18 @@ class RfqController extends Controller
             'rfq_code' => $request->rfq_code,
             'supplier_id' => $request->supplier_id,
             'quotation_date' => $request->quotation_date,
-            'status' => 'pending'
+            'status' => 'purchase_order',
         ]);
 
         // Tambahkan item RFQ
         foreach ($request->materials as $material) {
-            $materialModel = Material::find($material['material_id']);
-            $material_price = $materialModel->price;           // Ambil harga material dari tabel materials
-            $subtotal = $material_price * $material['quantity']; // Hitung subtotal
-
+            $materialModel = Material::findOrFail($material['material_id']);
+            $subtotal = $materialModel->price * $material['quantity'];
             // Simpan item RFQ
             $rfq->items()->create([
                 'material_id' => $material['material_id'],
                 'quantity' => $material['quantity'],
-                'material_price' => $material_price, // Simpan harga material
+                'material_price' => $materialModel->price, // Simpan harga material
                 'subtotal' => $subtotal              // Simpan subtotal
             ]);
         }
@@ -155,16 +155,85 @@ class RfqController extends Controller
         return redirect()->route('rfq.index')->with('success', 'RFQ berhasil dihapus.');
     }
 
-    public function updateStatus(Request $request, $id)
+    public function confirmRfq(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,approved,confirmed'
+            'action' => 'required|in:accepted,rejected'
         ]);
 
         $rfq = Rfq::findOrFail($id);
-        $rfq->update(['status' => $request->status]);
 
-        return redirect()->route('rfq.index')->with('success', 'Status RFQ berhasil diperbarui.');
+        if ($request->action === 'accepted') {
+            $rfq->status = 'pay_to_bill';
+        } elseif ($request->action === 'rejected') {
+            $rfq->status = 'rejected';
+        }
+
+        $rfq->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'RFQ berhasil dikonfirmasi.',
+            'status' => $rfq->status
+        ]);
+    }
+
+    public function processPayment(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:cash,transfer',
+        ]);
+
+        $rfq = Rfq::with('items.material')->findOrFail($id);
+
+        if ($rfq->status !== 'pay_to_bill') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status RFQ belum valid untuk pembayaran!'
+            ], 400);
+        }
+
+        // Hitung total
+        $totalAmount = $rfq->items->sum('subtotal');
+
+        // Rekam pembayaran
+        PaymentRecord::create([
+            'rfq_id' => $rfq->id,
+            'amount' => $totalAmount,
+            'payment_method' => $request->payment_method,
+            'payment_date' => now()
+        ]);
+
+        // Ubah status menjadi selesai
+        $rfq->update([
+            'status' => 'done',
+            'payment_status' => 'paid',
+            'payment_method' => $request->payment_method,
+            'payment_date' => now()
+        ]);
+
+        // Update stok material
+        foreach ($rfq->items as $item) {
+            $material = $item->material;
+            $material->stock += $item->quantity;
+            $material->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran berhasil diproses!'
+        ]);
+    }
+
+
+    public function generateInvoice($id)
+    {
+        $rfq = Rfq::with(['supplier', 'items.material'])->findOrFail($id);
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('pages.rfq.invoice', compact('rfq'));
+        
+        return $pdf->download('invoice-' . $rfq->rfq_code . '.pdf');
     }
 
 }

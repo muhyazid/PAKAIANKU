@@ -14,11 +14,15 @@ class Rfq extends Model
         'rfq_code',
         'supplier_id',
         'quotation_date',
-        'status'
+        'status',
+        'payment_status',
+        'payment_method',
+        'payment_date'
     ];
 
     protected $casts = [
-        'quotation_date' => 'date'
+        'quotation_date' => 'date',
+        'payment_date' => 'datetime'
     ];
 
     public function supplier()
@@ -29,5 +33,10 @@ class Rfq extends Model
     public function items()
     {
         return $this->hasMany(RfqItem::class);
+    }
+
+    public function payment_records()
+    {
+        return $this->hasMany(PaymentRecord::class, 'rfq_id');
     }
 }

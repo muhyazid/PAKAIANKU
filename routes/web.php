@@ -38,9 +38,10 @@ Route::get('/manufacturing-orders/{id}/check-stock', [ManufacturingOrderControll
 
 // Route resource untuk operasi CRUD RFQ
 Route::resource('rfq', RfqController::class);
-
-// Route khusus untuk update status RFQ
 Route::patch('rfq/{id}/status', [RfqController::class, 'updateStatus'])->name('rfq.updateStatus');
+Route::post('rfq/{id}/confirm', [RfqController::class, 'confirmRfq'])->name('rfq.confirm');
+Route::post('rfq/{id}/process-payment', [RfqController::class, 'processPayment'])->name('rfq.processPayment');
+Route::get('rfq/{id}/invoice', [RfqController::class, 'generateInvoice'])->name('rfq.invoice');
 
 Route::get('/suppliers/{supplierId}/add-price', [SuppliersController::class, 'createMaterialPrice'])->name('suppliers.add_price');
 Route::post('/suppliers/store-price', [SuppliersController::class, 'storeMaterialPrice'])->name('suppliers.store_price');
