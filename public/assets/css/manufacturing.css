@@ -1,0 +1,76 @@
+/* Styling modal untuk Manufacturing Orders */
+.modal-content.bg-dark {
+    background-color: #212529 !important;
+    border: 1px solid #343a40;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    border-bottom: 1px solid #343a40;
+}
+
+.modal-footer {
+    border-top: 1px solid #343a40;
+}
+
+.table-dark.table-bordered {
+    border: 1px solid #343a40;
+}
+
+.table-dark th,
+.table-dark td {
+    border-color: #343a40;
+}
+
+/* Badge styling for status */
+.badge-success {
+    background-color: #28a745 !important;
+}
+
+.badge-danger {
+    background-color: #dc3545 !important;
+}
+
+/* Modal Styling */
+.modal-dialog {
+    max-width: 600px; /* Minimal width for the modal */
+    margin: 30px auto;
+}
+
+.modal-content {
+    background-color: #212529;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+}
+
+.modal-header {
+    border-bottom: 1px solid #343a40;
+    padding: 10px 15px;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.modal-footer {
+    border-top: 1px solid #343a40;
+    padding: 10px 15px;
+}
+
+.table-dark.table-bordered th,
+.table-dark.table-bordered td {
+    border-color: #343a40;
+}
+
+/* Success and Danger Badges */
+.badge-success {
+    background-color: #28a745 !important;
+}
+
+.badge-danger {
+    background-color: #dc3545 !important;
+}

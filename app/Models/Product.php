@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     use HasFactory;
-    protected $fillable = ['nama_produk', 'kategori', 'deskripsi', 'image_path'];
+    protected $fillable = ['nama_produk', 'kategori', 'deskripsi', 'image_path', 'stock'];
     
     public function boms()
     {
@@ -18,5 +18,12 @@ class Product extends Model
     public function manufacturingOrders()
     {
         return $this->hasMany(ManufacturingOrder::class);
+    }
+
+    // Method untuk menambah stok produk
+    public function increaseStock($quantity)
+    {
+        $this->stock += $quantity;
+        $this->save();
     }
 }

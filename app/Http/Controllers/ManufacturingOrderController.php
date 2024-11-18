@@ -156,44 +156,56 @@ class ManufacturingOrderController extends Controller
 
     public function checkStock($id)
     {
-        $order = ManufacturingOrder::with('materials', 'product')->findOrFail($id);
-        $stockStatus = $order->checkMaterialStock();
-        
-        return response()->json($stockStatus);
+        try {
+            $order = ManufacturingOrder::with('product')->findOrFail($id);
+            $stockStatus = $order->checkMaterialStock();
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'product' => $order->product->nama_produk,
+                    'quantity' => $order->quantity,
+                    'sufficient_materials' => $stockStatus['sufficient_materials'],
+                    'insufficient_materials' => $stockStatus['insufficient_materials'],
+                    'has_sufficient_stock' => $stockStatus['has_sufficient_stock']
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
-
-    
-
 
     public function startProduction($id)
     {
         try {
-            $order = ManufacturingOrder::with('materials')->findOrFail($id);
-            $stockCheck = $order->checkMaterialStock();
+            DB::beginTransaction();
+            
+            $order = ManufacturingOrder::with(['materials', 'product'])->findOrFail($id);
+            $stockStatus = $order->checkMaterialStock();
 
-            if (!$stockCheck['has_sufficient_stock']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Stok material tidak mencukupi untuk produksi'
-                ], 400);
+            if (!$stockStatus['has_sufficient_stock']) {
+                throw new \Exception('Stok material tidak mencukupi untuk produksi');
             }
 
-            DB::beginTransaction();
-
-            // Update status menjadi Production
-            $order->status = ManufacturingOrder::STATUS_PRODUCTION;
+            // Update status ke Confirmed
+            $order->status = ManufacturingOrder::STATUS_CONFIRMED;
             $order->save();
 
-            // Kurangi stok material
+            // Mengurangi stok material
             foreach ($order->materials as $material) {
                 $material->kuantitas -= $material->pivot->to_consume;
                 $material->save();
             }
 
             DB::commit();
+        
             return response()->json([
-                'success' => true, 
-                'message' => 'Produksi berhasil dimulai'
+                'success' => true,
+                'message' => 'Produksi berhasil dimulai',
+                'order' => $order
             ]);
 
         } catch (\Exception $e) {
@@ -201,9 +213,27 @@ class ManufacturingOrderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 500);
+            ], 400);
         }
     }
 
+    public function completeProduction($id)
+    {
+        try {
+            $order = ManufacturingOrder::with('materials', 'product')->findOrFail($id);
+
+            $order->completeProduction();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Produksi selesai dan stok produk berhasil diperbarui.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
 
 }

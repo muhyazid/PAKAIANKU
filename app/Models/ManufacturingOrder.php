@@ -30,31 +30,40 @@ class ManufacturingOrder extends Model
                     ->withTimestamps();
     }
 
-    public function checkMaterialStock()
+  public function checkMaterialStock()
     {
         $insufficientMaterials = [];
         $sufficientMaterials = [];
         
-        foreach ($this->materials as $material) {
-            $required = $material->pivot->to_consume;
-            $available = $material->kuantitas;
-            
+        $bom = BoM::where('product_id', $this->product_id)
+                ->with('materials') // Pastikan memuat relasi materials
+                ->latest()
+                ->first();
+
+        if (!$bom) {
+            throw new \Exception('BoM tidak ditemukan untuk produk ini');
+        }
+
+        foreach ($bom->materials as $bomMaterial) {
+            $required = $bomMaterial->pivot->quantity * $this->quantity; // Hitung total kebutuhan material
+            $available = $bomMaterial->stock; // Ambil stok material dari tabel materials
+
             if ($available < $required) {
                 $insufficientMaterials[] = [
-                    'material' => $material,
+                    'material' => $bomMaterial,
                     'required' => $required,
                     'available' => $available,
                     'shortage' => $required - $available
                 ];
             } else {
                 $sufficientMaterials[] = [
-                    'material' => $material,
+                    'material' => $bomMaterial,
                     'required' => $required,
                     'available' => $available
                 ];
             }
         }
-        
+
         return [
             'has_sufficient_stock' => empty($insufficientMaterials),
             'insufficient_materials' => $insufficientMaterials,
@@ -62,26 +71,51 @@ class ManufacturingOrder extends Model
         ];
     }
 
+
     // Method untuk memulai produksi
     public function startProduction()
     {
-        $stockCheck = $this->checkMaterialStock();
-        
-        if (!$stockCheck['has_sufficient_stock']) {
-            throw new \Exception('Insufficient stock to start production');
-        }
-        
         DB::beginTransaction();
         try {
-            // Update status MO
-            $this->status = self::STATUS_PRODUCTION;
-            $this->save();
+            $stockStatus = $this->checkMaterialStock();
             
-            // Kurangi stock material
-            foreach ($this->materials as $material) {
-                $material->kuantitas -= $material->pivot->to_consume;
-                $material->save();
+            if (!$stockStatus['has_sufficient_stock']) {
+                throw new \Exception('Stok material tidak mencukupi untuk produksi');
             }
+
+            // Get BOM for the product
+            $bom = BoM::where('product_id', $this->product_id)->latest()->first();
+            
+            if (!$bom) {
+                throw new \Exception('BOM tidak ditemukan');
+            }
+
+            // Kurangi stok material berdasarkan BOM
+            foreach ($bom->materials as $bomMaterial) {
+                $material = Material::find($bomMaterial->id);
+                $requiredQuantity = $bomMaterial->pivot->quantity * $this->quantity;
+                
+                if ($material->kuantitas < $requiredQuantity) {
+                    throw new \Exception("Stok {$material->nama_bahan} tidak mencukupi");
+                }
+                
+                $material->kuantitas -= $requiredQuantity;
+                $material->save();
+                
+                // Attach material to manufacturing order
+                $this->materials()->attach($material->id, [
+                    'to_consume' => $requiredQuantity,
+                    'quantity' => $requiredQuantity
+                ]);
+            }
+
+            // Update status MO
+            $this->status = self::STATUS_CONFIRMED;
+            $this->save();
+
+            // Tambah stok produk
+            $this->product->stock += $this->quantity;
+            $this->product->save();
             
             DB::commit();
             return true;
@@ -91,4 +125,23 @@ class ManufacturingOrder extends Model
         }
     }
 
+    public function completeProduction()
+    {
+        if ($this->status !== self::STATUS_CONFIRMED) {
+            throw new \Exception('Manufacturing Order harus dalam status Confirmed');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Update status
+            $this->status = self::STATUS_DONE;
+            $this->save();
+            
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 }

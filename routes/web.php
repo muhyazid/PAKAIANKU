@@ -27,13 +27,12 @@ Route::resource('boms', BoMController::class);
 Route::get('/boms/{id}/report', [BoMController::class, 'report'])->name('boms.report');
 
 Route::resource('manufacturing_orders', ManufacturingOrderController::class);
-
 Route::get('/manufacturing_orders/materials/{productId}', [ManufacturingOrderController::class, 'getMaterialsByProduct']);
-
 Route::get('/api/bom-materials/{productId}', [ManufacturingOrderController::class, 'getBomMaterials']);
-
-// routes/web.php
 Route::get('/manufacturing-orders/{id}/check-stock', [ManufacturingOrderController::class, 'checkStock']);
+Route::post('/manufacturing-orders/{id}/complete-production', [ManufacturingOrderController::class, 'completeProduction']);
+Route::post('/manufacturing-orders/{id}/start-production', [ManufacturingOrderController::class, 'startProduction']);
+
 
 
 // Route resource untuk operasi CRUD RFQ
