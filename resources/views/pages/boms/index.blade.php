@@ -5,7 +5,10 @@
 @section('content')
     <div class="page-header">
         <h3 class="page-title">Daftar Bill of Materials (BoM)</h3>
-        <a href="{{ route('boms.create') }}" class="btn btn-primary">Tambah BoM</a>
+        <!-- Tombol untuk memunculkan modal Tambah BoM -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createBoMModal">
+            Tambah BoM
+        </button>
     </div>
 
     <div class="card">
@@ -43,52 +46,51 @@
                                     </ul>
                                 </td>
                                 <td>
-                                    <!-- View Button -->
+                                    <!-- Tombol View (Lihat) -->
                                     <button type="button" class="btn btn-info" data-toggle="modal"
                                         data-target="#viewBoMModal-{{ $bom->id }}" title="View">
-                                        <i class="fas fa-eye"></i> View
+                                        <i class="fas fa-eye"></i> Lihat
                                     </button>
 
-                                    <!-- Edit Button -->
+                                    <!-- Tombol Edit -->
                                     <a href="{{ route('boms.edit', $bom->id) }}" class="btn btn-warning" title="Edit">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
 
-                                    <!-- Report Button -->
+                                    <!-- Tombol Report -->
                                     <a href="{{ route('boms.report', $bom->id) }}" class="btn btn-success"
-                                        title="Download Report">
-                                        <i class="fas fa-file-pdf"></i> Report
+                                        title="Unduh Laporan">
+                                        <i class="fas fa-file-pdf"></i> Laporan
                                     </a>
 
-                                    <!-- Delete Button -->
+                                    <!-- Tombol Hapus -->
                                     <form action="{{ route('boms.destroy', $bom->id) }}" method="POST"
                                         style="display:inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-danger" title="Delete"
+                                        <button type="submit" class="btn btn-danger" title="Hapus"
                                             onclick="return confirm('Apakah kamu yakin ingin menghapus BoM ini?');">
-                                            <i class="fas fa-trash"></i> Delete
+                                            <i class="fas fa-trash"></i> Hapus
                                         </button>
                                     </form>
                                 </td>
                             </tr>
 
-                            <!-- Modal for Viewing BoM Details -->
+                            <!-- Modal untuk Melihat Detail BoM -->
                             <div class="modal fade" id="viewBoMModal-{{ $bom->id }}" tabindex="-1" role="dialog"
                                 aria-labelledby="viewBoMModalLabel-{{ $bom->id }}" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content text-light" style="background-color: #343a40;">
-                                        <!-- Tambahkan text-light -->
+                                <div class="modal-dialog modal-md" role="document">
+                                    <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="viewBoMModalLabel-{{ $bom->id }}">BoM Details
+                                            <h5 class="modal-title" id="viewBoMModalLabel-{{ $bom->id }}">Detail BoM
                                             </h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true" class="text-light">&times;</span>
-                                                <!-- Tambahkan text-light -->
+                                                <span aria-hidden="true">&times;</span>
                                             </button>
                                         </div>
                                         <div class="modal-body">
-                                            <h6>Nama Produk: {{ $bom->nama_produk }}</h6>
+                                            <h6>Nama Produk: {{ $bom->product->nama_produk ?? 'Produk tidak ditemukan' }}
+                                            </h6>
                                             <p>Kode Produksi: {{ $bom->production_code }}</p>
                                             <p>Jumlah Produksi: {{ $bom->quantity }}</p>
 
@@ -102,7 +104,7 @@
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Close</button>
+                                                data-dismiss="modal">Tutup</button>
                                         </div>
                                     </div>
                                 </div>
@@ -113,4 +115,112 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal untuk Menambahkan BoM -->
+    <div class="modal fade" id="createBoMModal" tabindex="-1" role="dialog" aria-labelledby="createBoMModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createBoMModalLabel">Tambah Bill of Materials (BoM)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('boms.store') }}" method="POST">
+                        @csrf
+                        <div class="form-group">
+                            <label for="product_id">Nama Produk</label>
+                            <select name="product_id" class="form-control" required>
+                                <option value="">Pilih Produk</option>
+                                @foreach ($products as $product)
+                                    <option value="{{ $product->id }}">{{ $product->nama_produk }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="production_code">Kode BoM</label>
+                            <input type="text" class="form-control" name="production_code" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">Jumlah Produksi</label>
+                            <input type="number" class="form-control" name="quantity" required>
+                        </div>
+                        <h4>Komponen / Material</h4>
+                        <table class="table table-bordered" id="components-table">
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Jumlah</th>
+                                    <th>Satuan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <select name="materials[0][material_id]" class="form-control" required>
+                                            <option value="">Pilih Material</option>
+                                            @foreach ($materials as $material)
+                                                <option value="{{ $material->id }}">{{ $material->nama_bahan }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td><input type="number" name="materials[0][quantity]" class="form-control" required>
+                                    </td>
+                                    <td>
+                                        <select name="materials[0][unit]" class="form-control">
+                                            <option value="gram">gram</option>
+                                            <option value="meter">meter</option>
+                                            <option value="pcs">pcs</option>
+                                        </select>
+                                    </td>
+                                    <td><button type="button" class="btn btn-success btn-add-row">+</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('scripts')
+    <script>
+        let rowCount = 1;
+        document.querySelector('.btn-add-row').addEventListener('click', function() {
+            let table = document.querySelector('#components-table tbody');
+            let newRow = document.createElement('tr');
+            newRow.innerHTML = `
+            <td>
+                <select name="materials[${rowCount}][material_id]" class="form-control" required>
+                    <option value="">Pilih Material</option>
+                    @foreach ($materials as $material)
+                        <option value="{{ $material->id }}">{{ $material->nama_bahan }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td><input type="number" name="materials[${rowCount}][quantity]" class="form-control" required></td>
+            <td>
+                <select name="materials[${rowCount}][unit]" class="form-control">
+                    <option value="gram">gram</option>
+                    <option value="meter">meter</option>
+                    <option value="pcs">pcs</option>
+                </select>
+            </td>
+            <td><button type="button" class="btn btn-danger btn-remove-row">-</button></td>
+        `;
+            table.appendChild(newRow);
+            rowCount++;
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('btn-remove-row')) {
+                e.target.closest('tr').remove();
+            }
+        });
+    </script>
 @endsection

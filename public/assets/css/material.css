@@ -1,0 +1,39 @@
+.modal-body {
+    display: block; /* Ubah menjadi block agar konten tersusun vertikal */
+    gap: 0; /* Hilangkan jarak antar elemen */
+}
+
+.stacked-info p {
+    margin: 0 0 10px; /* Jarak antar paragraf */
+    line-height: 1.5; /* Jarak antar baris teks */
+}
+
+.modal-body .form-group {
+    margin-bottom: 15px; /* Jarak bawah tiap grup input */
+}
+
+.modal-body .form-group label {
+    font-weight: bold; /* Tebalkan label */
+    margin-bottom: 5px;
+    display: block; /* Label berada di atas input */
+}
+
+.modal-body .form-group input,
+.modal-body .form-group textarea {
+    width: 100%; /* Lebar input 100% */
+    padding: 8px;
+    border: 1px solid #444; /* Warna border gelap */
+    border-radius: 4px;
+    background-color: #222; /* Background hitam */
+    color: #fff; /* Teks putih */
+}
+
+.modal-body img {
+    width: 100%; /* Pastikan gambar sesuai dengan lebar kontainer */
+    max-width: 1600px; /* Maksimal lebar gambar */
+    height: auto; /* Jaga proporsi gambar */
+    max-height: 900px; /* Maksimal tinggi gambar */
+    object-fit: cover; /* Potong gambar jika tidak sesuai */
+    display: block; /* Hilangkan margin default jika ada */
+    margin: 0 auto; /* Pusatkan gambar dalam kontainer */
+}

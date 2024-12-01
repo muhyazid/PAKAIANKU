@@ -157,9 +157,9 @@ class ManufacturingOrderController extends Controller
     public function checkStock($id)
     {
         try {
-            $order = ManufacturingOrder::with('product')->findOrFail($id);
+            $order = ManufacturingOrder::findOrFail($id);
             $stockStatus = $order->checkMaterialStock();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -167,13 +167,13 @@ class ManufacturingOrderController extends Controller
                     'quantity' => $order->quantity,
                     'sufficient_materials' => $stockStatus['sufficient_materials'],
                     'insufficient_materials' => $stockStatus['insufficient_materials'],
-                    'has_sufficient_stock' => $stockStatus['has_sufficient_stock']
-                ]
+                    'has_sufficient_stock' => $stockStatus['has_sufficient_stock'],
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }

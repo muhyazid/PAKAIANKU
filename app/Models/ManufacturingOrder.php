@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class ManufacturingOrder extends Model
 {
     use HasFactory;
-     protected $fillable = ['product_id', 'quantity', 'start_date', 'kode_MO', 'status'];
+    protected $fillable = ['product_id', 'quantity', 'start_date', 'kode_MO', 'status'];
 
-     // Tambahkan konstanta untuk status
+    // Tambahkan konstanta untuk status
     const STATUS_DRAFT = 'Draft';
     const STATUS_CONFIRMED = 'Confirmed';
     const STATUS_PRODUCTION = 'Production';
@@ -30,46 +30,46 @@ class ManufacturingOrder extends Model
                     ->withTimestamps();
     }
 
-  public function checkMaterialStock()
+  // Model: ManufacturingOrder.php
+
+    public function checkMaterialStock()
     {
-        $insufficientMaterials = [];
-        $sufficientMaterials = [];
-        
-        $bom = BoM::where('product_id', $this->product_id)
-                ->with('materials') // Pastikan memuat relasi materials
-                ->latest()
-                ->first();
+        $bom = BoM::where('product_id', $this->product_id)->with('materials')->first();
 
         if (!$bom) {
-            throw new \Exception('BoM tidak ditemukan untuk produk ini');
+            throw new \Exception('BoM tidak ditemukan untuk produk ini.');
         }
 
-        foreach ($bom->materials as $bomMaterial) {
-            $required = $bomMaterial->pivot->quantity * $this->quantity; // Hitung total kebutuhan material
-            $available = $bomMaterial->stock; // Ambil stok material dari tabel materials
+        $insufficientMaterials = [];
+        $sufficientMaterials = [];
+
+        foreach ($bom->materials as $material) {
+            $required = $material->pivot->quantity * $this->quantity;
+            $available = $material->stock;
 
             if ($available < $required) {
                 $insufficientMaterials[] = [
-                    'material' => $bomMaterial,
+                    'material' => $material,
                     'required' => $required,
                     'available' => $available,
-                    'shortage' => $required - $available
+                    'shortage' => $required - $available,
                 ];
             } else {
                 $sufficientMaterials[] = [
-                    'material' => $bomMaterial,
+                    'material' => $material,
                     'required' => $required,
-                    'available' => $available
+                    'available' => $available,
                 ];
             }
         }
 
         return [
             'has_sufficient_stock' => empty($insufficientMaterials),
+            'sufficient_materials' => $sufficientMaterials,
             'insufficient_materials' => $insufficientMaterials,
-            'sufficient_materials' => $sufficientMaterials
         ];
     }
+
 
 
     // Method untuk memulai produksi

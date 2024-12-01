@@ -119,11 +119,18 @@
                 <span class="menu-icon">
                     <i class="mdi mdi-playlist-play"></i>
                 </span>
-                <span class="menu-title">RfQ</span>
+                <span class="menu-title">Purchase</span>
             </a>
         </li>
 
-
+        <li class="nav-item menu-items {{ Request::is('customers') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('customers.index') }}">
+                <span class="menu-icon">
+                    <i class="mdi mdi-account-multiple"></i>
+                </span>
+                <span class="menu-title">Customers</span>
+            </a>
+        </li>
 
         <li class="nav-item menu-items">
             <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">

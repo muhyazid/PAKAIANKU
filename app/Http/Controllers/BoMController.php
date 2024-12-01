@@ -11,15 +11,18 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class BoMController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
         // Mengambil data BoM dengan relasi product dan materials
         $boms = BoM::with('product', 'materials')->get();
-        return view('pages.boms.index', compact('boms'));
+
+        // Ambil semua produk untuk dropdown
+        $products = Product::all();
+
+        // Ambil semua material untuk dropdown
+        $materials = Material::all();
+
+        return view('pages.boms.index', compact('boms', 'products', 'materials'));
     }
 
     /**
