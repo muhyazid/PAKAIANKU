@@ -119,7 +119,7 @@
                         response.data.sufficient_materials.forEach(function(material) {
                             stockTableBody.append(`
                                 <tr>
-                                    <td>${material.material.nama_material}</td>
+                                    <td>${material.material.nama_bahan}</td>
                                     <td>${material.required}</td>
                                     <td>${material.available}</td>
                                     <td><i class="fas fa-check-circle text-success"></i></td>
@@ -130,7 +130,7 @@
                         response.data.insufficient_materials.forEach(function(material) {
                             stockTableBody.append(`
                             <tr>
-                                <td>${material.material.nama_material}</td>
+                                <td>${material.material.nama_bahan}</td>
                                 <td>${material.required}</td>
                                 <td>${material.available}</td>
                                 <td><i class="fas fa-times-circle text-danger"></i></td>
