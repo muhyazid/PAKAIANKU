@@ -17,6 +17,7 @@
                         <p><strong>Kategori:</strong> {{ $product->kategori }}</p>
                         <p><strong>Deskripsi:</strong> {{ $product->deskripsi }}</p>
                         <p><strong>Harga:</strong> Rp {{ $product->price }}</p>
+                        <p><strong>Stok:</strong> {{ $product->stock }}</p>
                     </div>
                 </div>
             </div>

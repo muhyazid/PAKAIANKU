@@ -81,21 +81,21 @@
                         materialsContainer.innerHTML = data.materials.map(material => {
                             const requiredQty = (material.pivot.quantity * quantity).toFixed(2);
                             return `
-                                <tr>
-                                    <td>${material.nama_bahan}</td>
-                                    <td>${material.pivot.unit}</td>
-                                    <td>${requiredQty}</td>
-                                    <td>
-                                        <input type="hidden" name="materials[${material.id}][material_id]" value="${material.id}">
-                                        <input type="number" 
-                                               name="materials[${material.id}][to_consume]" 
-                                               value="${requiredQty}" 
-                                               class="form-control"
-                                               step="0.01"
-                                               required>
-                                    </td>
-                                </tr>
-                            `;
+                                    <tr>
+                                        <td>${material.nama_bahan}</td>
+                                        <td>${material.pivot.unit}</td>
+                                        <td>${requiredQty}</td>
+                                        <td>
+                                            <input type="hidden" name="materials[${material.id}][material_id]" value="${material.id}">
+                                            <input type="number" 
+                                                name="materials[${material.id}][to_consume]" 
+                                                value="${requiredQty}" 
+                                                class="form-control"
+                                                step="0.01"
+                                                required>
+                                        </td>
+                                    </tr>
+                                `;
                         }).join('');
                     })
                     .catch(error => {

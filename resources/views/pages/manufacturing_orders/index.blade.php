@@ -64,17 +64,18 @@
     </div>
 
     <!-- Modal Cek Stock -->
-    <div class="modal fade" id="stockModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="stockModal" tabindex="-1" role="dialog" aria-labelledby="stockModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Cek Ketersediaan Stok</h5>
+                    <h5 class="modal-title" id="stockModalLabel">Cek Ketersediaan Stok</h5>
                     <button type="button" class="close text-light" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div id="stockStatus"></div>
+                    <div id="stockStatus" class="mb-3"></div>
                     <table class="table table-dark table-bordered">
                         <thead>
                             <tr>
@@ -90,7 +91,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
                     <button type="button" class="btn btn-primary" id="startProductionBtn" style="display: none;">
-                        Mulai Produksi
+                        Lakukan Produksi
                     </button>
                 </div>
             </div>
@@ -98,77 +99,76 @@
     </div>
 
     <script>
-        $(document).ready(function() {
-            $('.check-stock').on('click', function() {
-                const orderId = $(this).data('id');
-                $.ajax({
-                    url: `/manufacturing-orders/${orderId}/check-stock`,
-                    method: 'GET',
-                    beforeSend: function() {
-                        $('#stockTableBody').html(
-                            '<tr><td colspan="4" class="text-center">Loading...</td></tr>');
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            const {
-                                sufficient_materials,
-                                insufficient_materials,
-                                has_sufficient_stock,
-                                product,
-                                quantity
-                            } = response.data;
+        // Button untuk cek status stok
+        $(document).on('click', '.check-stock', function() {
+            var orderId = $(this).data('id');
 
-                            $('#stockStatus').html(
-                                `<h5>${product}</h5><p>Jumlah: ${quantity}</p>`);
-                            const tableBody = $('#stockTableBody').empty();
+            // Panggil AJAX untuk memeriksa status stok
+            $.ajax({
+                url: '/manufacturing_orders/' + orderId + '/check-stock',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        var stockTableBody = $('#stockTableBody');
+                        var stockStatus = $('#stockStatus');
+                        var startProductionBtn = $('#startProductionBtn');
+                        stockTableBody.empty();
+                        stockStatus.empty();
+                        var sufficientStock = true;
 
-                            sufficient_materials.forEach(item => {
-                                tableBody.append(`
-                                    <tr>
-                                        <td>${item.material.nama_bahan}</td>
-                                        <td>${item.required}</td>
-                                        <td>${item.available}</td>
-                                        <td><span class="badge badge-success">Tersedia</span></td>
-                                    </tr>
-                                `);
-                            });
+                        response.data.sufficient_materials.forEach(function(material) {
+                            stockTableBody.append(`
+                            <tr>
+                                <td>${material.material.name}</td>
+                                <td>${material.required}</td>
+                                <td>${material.available}</td>
+                                <td><i class="fas fa-check-circle text-success"></i></td>
+                            </tr>
+                        `);
+                        });
 
-                            insufficient_materials.forEach(item => {
-                                tableBody.append(`
-                                    <tr>
-                                        <td>${item.material.nama_bahan}</td>
-                                        <td>${item.required}</td>
-                                        <td>${item.available}</td>
-                                        <td><span class="badge badge-danger">Kurang ${item.shortage}</span></td>
-                                    </tr>
-                                `);
-                            });
+                        response.data.insufficient_materials.forEach(function(material) {
+                            stockTableBody.append(`
+                            <tr>
+                                <td>${material.material.name}</td>
+                                <td>${material.required}</td>
+                                <td>${material.available}</td>
+                                <td><i class="fas fa-times-circle text-danger"></i></td>
+                            </tr>
+                        `);
+                            sufficientStock = false;
+                        });
 
-                            if (has_sufficient_stock) {
-                                $('#startProductionBtn').show();
-                            } else {
-                                $('#startProductionBtn').hide();
-                            }
-
-                            $('#stockModal').modal('show');
+                        if (sufficientStock) {
+                            stockStatus.html(
+                                '<div class="alert alert-success">Stok material mencukupi untuk produksi.</div>'
+                            );
+                            startProductionBtn.show();
+                        } else {
+                            stockStatus.html(
+                                '<div class="alert alert-danger">Stok material tidak mencukupi untuk produksi.</div>'
+                            );
+                            startProductionBtn.hide();
                         }
-                    },
-                });
+                    }
+                }
             });
+        });
 
-            $('#startProductionBtn').on('click', function() {
-                const orderId = $('.check-stock').data('id');
-                if (confirm('Yakin ingin memulai produksi?')) {
-                    $.ajax({
-                        url: `/manufacturing-orders/${orderId}/start-production`,
-                        method: 'POST',
-                        success: function(response) {
-                            alert(response.message);
-                            if (response.success) {
-                                location.reload();
-                            }
-                        },
-                    });
+        // Menangani klik tombol Lakukan Produksi
+        $('#startProductionBtn').on('click', function() {
+            var orderId = $('.check-stock').data('id');
+
+            $.ajax({
+                url: '/manufacturing_orders/' + orderId + '/start-production',
+                method: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        alert('Produksi berhasil dimulai!');
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
                 }
             });
         });
