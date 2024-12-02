@@ -1,4 +1,4 @@
-@extends ('layouts.master')
+@extends('layouts.master')
 
 @section('title', 'Daftar Manufacturing Orders')
 
@@ -43,6 +43,12 @@
                                             <button class="btn btn-sm btn-info check-stock" data-id="{{ $order->id }}"
                                                 data-toggle="modal" data-target="#stockModal">
                                                 Cek Stock
+                                            </button>
+                                        @elseif ($order->status === 'Confirmed')
+                                            <button class="btn btn-sm btn-success complete-production"
+                                                data-id="{{ $order->id }}" data-toggle="modal"
+                                                data-target="#completeProductionModal">
+                                                Akhiri
                                             </button>
                                         @endif
                                         <a href="{{ route('manufacturing_orders.edit', $order->id) }}"
@@ -97,13 +103,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Akhiri Produksi -->
+    <div class="modal fade" id="completeProductionModal" tabindex="-1" role="dialog"
+        aria-labelledby="completeProductionModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completeProductionModalLabel">Konfirmasi Penyelesaian Produksi</h5>
+                    <button type="button" class="close text-light" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Apakah produksi selesai?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tidak</button>
+                    <button type="button" class="btn btn-success" id="completeProductionBtn">Ya, Selesai</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
     <script>
-        // Button untuk cek status stok
+        // Menangani tombol Cek Stock
         $(document).on('click', '.check-stock', function() {
             var orderId = $(this).data('id');
+
+            // Menyimpan orderId di modal
+            $('#stockModal').data('order-id', orderId);
+
             $.ajax({
                 url: '/manufacturing_orders/' + orderId + '/check-stock',
                 method: 'GET',
@@ -116,6 +148,7 @@
                         stockStatus.empty();
                         var sufficientStock = true;
 
+                        // Menambahkan material yang cukup ke dalam tabel
                         response.data.sufficient_materials.forEach(function(material) {
                             stockTableBody.append(`
                                 <tr>
@@ -127,15 +160,16 @@
                             `);
                         });
 
+                        // Menambahkan material yang tidak cukup ke dalam tabel
                         response.data.insufficient_materials.forEach(function(material) {
                             stockTableBody.append(`
-                            <tr>
-                                <td>${material.material.nama_bahan}</td>
-                                <td>${material.required}</td>
-                                <td>${material.available}</td>
-                                <td><i class="fas fa-times-circle text-danger"></i></td>
-                            </tr>
-                        `);
+                                <tr>
+                                    <td>${material.material.nama_bahan}</td>
+                                    <td>${material.required}</td>
+                                    <td>${material.available}</td>
+                                    <td><i class="fas fa-times-circle text-danger"></i></td>
+                                </tr>
+                            `);
                             sufficientStock = false;
                         });
 
@@ -157,13 +191,36 @@
 
         // Menangani klik tombol Lakukan Produksi
         $('#startProductionBtn').on('click', function() {
-            var orderId = $('.check-stock').data('id');
+            var orderId = $('#stockModal').data('order-id');
             $.ajax({
                 url: '/manufacturing_orders/' + orderId + '/start-production',
                 method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
                 success: function(response) {
                     if (response.success) {
                         alert('Produksi berhasil dimulai!');
+                        location.reload(); // Reload halaman untuk memperbarui status
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            });
+        });
+
+        // Menangani klik tombol Akhiri Produksi
+        $('#completeProductionBtn').on('click', function() {
+            var orderId = $('.complete-production').data('id');
+            $.ajax({
+                url: '/manufacturing_orders/' + orderId + '/complete-production',
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Produksi selesai!');
                         location.reload();
                     } else {
                         alert(response.message);
@@ -172,4 +229,4 @@
             });
         });
     </script>
-@endsection
+@endpush

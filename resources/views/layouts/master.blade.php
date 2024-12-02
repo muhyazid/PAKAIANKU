@@ -3,6 +3,7 @@
 <html lang="en">
 
 <head>
+    @stack('styles')
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -60,8 +61,10 @@
     <!-- JS untuk Select2 dan Flatpickr -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>
