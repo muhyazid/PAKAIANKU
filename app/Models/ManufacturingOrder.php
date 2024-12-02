@@ -30,8 +30,7 @@ class ManufacturingOrder extends Model
                     ->withTimestamps();
     }
 
-  // Model: ManufacturingOrder.php
-
+    
     public function checkMaterialStock()
     {
         $bom = BoM::where('product_id', $this->product_id)->with('materials')->first();

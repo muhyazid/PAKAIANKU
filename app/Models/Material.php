@@ -15,7 +15,6 @@ class Material extends Model
         'image',
         'price',
         'stock',
-
     ];
 
     public function boms()
@@ -24,14 +23,12 @@ class Material extends Model
                     ->withPivot('quantity', 'unit')
                     ->withTimestamps();
     }
-
     public function manufacturingOrders()
     {
         return $this->belongsToMany(ManufacturingOrder::class, 'manufacturing_order_materials')
                     ->withPivot('to_consume', 'quantity')
                     ->withTimestamps();
     }
-
     public function suppliers()
     {
         return $this->hasMany(Suppliers::class, 'material_id');

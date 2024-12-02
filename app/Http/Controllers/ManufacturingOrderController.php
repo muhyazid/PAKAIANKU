@@ -167,53 +167,37 @@ class ManufacturingOrderController extends Controller
                     'quantity' => $order->quantity,
                     'sufficient_materials' => $stockStatus['sufficient_materials'],
                     'insufficient_materials' => $stockStatus['insufficient_materials'],
-                    'has_sufficient_stock' => $stockStatus['has_sufficient_stock'],
                 ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], 400);
+                'message' => 'Terjadi kesalahan saat memeriksa stok.',
+            ]);
         }
     }
 
     public function startProduction($id)
     {
         try {
-            DB::beginTransaction();
-            
-            $order = ManufacturingOrder::with(['materials', 'product'])->findOrFail($id);
-            $stockStatus = $order->checkMaterialStock();
-
-            if (!$stockStatus['has_sufficient_stock']) {
-                throw new \Exception('Stok material tidak mencukupi untuk produksi');
-            }
-
-            // Update status ke Confirmed
-            $order->status = ManufacturingOrder::STATUS_CONFIRMED;
+            $order = ManufacturingOrder::findOrFail($id);
+            $order->status = 'Confirmed';
             $order->save();
 
-            // Mengurangi stok material
+            // Update stok material
             foreach ($order->materials as $material) {
-                $material->kuantitas -= $material->pivot->to_consume;
-                $material->save();
+                $material->updateStockForOrder($order);
             }
 
-            DB::commit();
-        
             return response()->json([
                 'success' => true,
-                'message' => 'Produksi berhasil dimulai',
-                'order' => $order
+                'message' => 'Produksi dimulai!',
             ]);
-
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+                'message' => 'Terjadi kesalahan saat memulai produksi.',
+            ]);
         }
     }
 

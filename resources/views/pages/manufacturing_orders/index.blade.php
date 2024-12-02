@@ -97,13 +97,13 @@
             </div>
         </div>
     </div>
+@endsection
 
+@section('scripts')
     <script>
         // Button untuk cek status stok
         $(document).on('click', '.check-stock', function() {
             var orderId = $(this).data('id');
-
-            // Panggil AJAX untuk memeriksa status stok
             $.ajax({
                 url: '/manufacturing_orders/' + orderId + '/check-stock',
                 method: 'GET',
@@ -118,19 +118,19 @@
 
                         response.data.sufficient_materials.forEach(function(material) {
                             stockTableBody.append(`
-                            <tr>
-                                <td>${material.material.name}</td>
-                                <td>${material.required}</td>
-                                <td>${material.available}</td>
-                                <td><i class="fas fa-check-circle text-success"></i></td>
-                            </tr>
-                        `);
+                                <tr>
+                                    <td>${material.material.nama_material}</td>
+                                    <td>${material.required}</td>
+                                    <td>${material.available}</td>
+                                    <td><i class="fas fa-check-circle text-success"></i></td>
+                                </tr>
+                            `);
                         });
 
                         response.data.insufficient_materials.forEach(function(material) {
                             stockTableBody.append(`
                             <tr>
-                                <td>${material.material.name}</td>
+                                <td>${material.material.nama_material}</td>
                                 <td>${material.required}</td>
                                 <td>${material.available}</td>
                                 <td><i class="fas fa-times-circle text-danger"></i></td>
@@ -158,7 +158,6 @@
         // Menangani klik tombol Lakukan Produksi
         $('#startProductionBtn').on('click', function() {
             var orderId = $('.check-stock').data('id');
-
             $.ajax({
                 url: '/manufacturing_orders/' + orderId + '/start-production',
                 method: 'POST',
