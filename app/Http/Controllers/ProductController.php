@@ -39,7 +39,7 @@ class ProductController extends Controller
             'nama_produk' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'price' => 'nullable|numeric',
+            'price' => 'nullable|numeric|min:0',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -54,9 +54,38 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    public function update(Request $request, string $id)
+    {
+        // Validasi input
+        $request->validate([
+            'nama_produk' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Ambil data produk yang akan diupdate
+        $product = Product::findOrFail($id);
+
+        // Jika ada file gambar baru, upload
+        if ($request->hasFile('image')) {
+            // Hapus gambar lama
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
+            }
+
+            // Upload gambar baru
+            $imagePath = $request->file('image')->store('images', 'public');
+            $product->image_path = $imagePath;
+        }
+
+        // Update data produk
+        $product->update($request->except('image'));
+
+        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
+    }
+
     public function destroy(string $id)
     {
         // Hapus data produk

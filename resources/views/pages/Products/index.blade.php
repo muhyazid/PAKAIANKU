@@ -32,7 +32,9 @@
 
                     <!-- Nama Produk -->
                     <h5 class="card-title" style="font-weight: bold;">{{ $product->nama_produk }}</h5>
-
+                    <!-- Harga Produk -->
+                    <p style="color: #f0f0f0; font-weight: bold;">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                    <!-- Harga terlihat terang -->
                     <!-- Tombol Aksi -->
                     <div style="margin-top: 10px;">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal"
@@ -44,10 +46,10 @@
                             View
                         </a>
                         <form action="{{ route('products.destroy', $product->id) }}" method="POST"
-                            style="display:inline-block;">
+                            style="display:inline-block;" onsubmit="return confirm('Apakah Anda yakin?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
                         </form>
                     </div>
                 </div>
@@ -102,8 +104,10 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="price">Harga</label>
-                                    <input type="number" name="price" class="form-control" id="price">
+                                    <input type="number" name="price" class="form-control" id="price"
+                                        value="{{ old('price') }}">
                                 </div>
+
                             </div>
                         </div>
                         <!-- Tombol Simpan -->

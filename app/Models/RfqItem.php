@@ -9,20 +9,18 @@ class RfqItem extends Model
 {
     use HasFactory;
     protected $table = 'rfq_items';
-    
     protected $fillable = [
         'rfq_id',
         'material_id',
         'quantity',
-        'material_price',  // Menyimpan harga satuan dari material
+        'material_price',  
         'subtotal' 
     ];
-
+    
     public function rfq()
     {
         return $this->belongsTo(Rfq::class);
     }
-
     public function material()
     {
         return $this->belongsTo(Material::class);

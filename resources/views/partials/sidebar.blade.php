@@ -132,6 +132,16 @@
             </a>
         </li>
 
+        <li class="nav-item menu-items {{ Request::is('sales*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('sales.index') }}">
+                <span class="menu-icon">
+                    <i class="mdi mdi-cart"></i>
+                </span>
+                <span class="menu-title">Sales</span>
+            </a>
+        </li>
+
+
         <li class="nav-item menu-items">
             <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
                 <span class="menu-icon">

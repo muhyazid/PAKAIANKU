@@ -2,12 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BoMController;
-use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\RfQController;
+use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\SuppliersController;
 use App\Http\Controllers\ManufacturingOrderController;
-use App\Http\Controllers\RfQController;
 
 Route::resource('rfq', RfQController::class);
 
@@ -44,6 +45,7 @@ Route::get('rfq/{id}/invoice', [RfqController::class, 'generateInvoice'])->name(
 Route::get('/suppliers/{supplierId}/add-price', [SuppliersController::class, 'createMaterialPrice'])->name('suppliers.add_price');
 Route::post('/suppliers/store-price', [SuppliersController::class, 'storeMaterialPrice'])->name('suppliers.store_price');
 
-
 // Route Customers
 Route::resource('customers', CustomerController::class);
+
+Route::resource('sales', SalesController::class);

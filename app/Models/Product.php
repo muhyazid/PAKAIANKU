@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     use HasFactory;
-    protected $fillable = ['nama_produk', 'kategori', 'deskripsi', 'image_path', 'stock'];
+    protected $fillable = ['nama_produk', 'kategori', 'deskripsi', 'image_path', 'stock', 'price'];
     public function boms()
     {
         return $this->hasMany(BoM::class);
