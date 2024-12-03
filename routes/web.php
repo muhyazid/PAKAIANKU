@@ -24,7 +24,7 @@ Route::resource('materials', MaterialController::class);
 Route::resource('suppliers', SuppliersController::class);
 
 Route::resource('boms', BoMController::class);
-
+Route::get('/boms/get-next-code', [BoMController::class, 'getNextBoMCode'])->name('boms.nextCode');
 Route::get('/boms/{id}/report', [BoMController::class, 'report'])->name('boms.report');
 
 Route::resource('manufacturing_orders', ManufacturingOrderController::class);

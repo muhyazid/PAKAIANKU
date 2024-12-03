@@ -43,7 +43,7 @@ class BoMController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'production_code' => 'required|string|unique:boms,production_code',
+            // 'production_code' => 'required|string|unique:boms,production_code',
             'quantity' => 'required|integer|min:1',
             'materials' => 'required|array|min:1',
             'materials.*.material_id' => 'required|exists:materials,id',
@@ -51,10 +51,13 @@ class BoMController extends Controller
             'materials.*.unit' => 'required|string',
         ]);
 
+        // Generate kode BoM
+        $production_code = $this->generateBoMCode();
+
         // Simpan BoM ke database
         $bom = BoM::create([
             'product_id' => $request->product_id,
-            'production_code' => $request->production_code,
+            'production_code' => $production_code,
             'quantity' => $request->quantity,
         ]);
 
@@ -161,5 +164,26 @@ class BoMController extends Controller
 
         // Unduh file PDF
         return $pdf->download('BoM_Report_' . $bom->production_code . '.pdf');
+    }
+
+    private function generateBoMCode()
+    {
+        $latestBom = BoM::orderBy('id', 'desc')->first();
+        
+        if (!$latestBom) {
+            return 'BOM0001';
+        }
+        
+        // Extract number from latest code
+        $lastNumber = intval(substr($latestBom->production_code, 3));
+        $newNumber = $lastNumber + 1;
+        
+        // Generate new code with padding
+        return 'BOM' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function getNextBoMCode()
+    {
+        return response()->json(['code' => $this->generateBoMCode()]);
     }
 }

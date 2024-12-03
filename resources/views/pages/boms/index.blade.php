@@ -141,7 +141,7 @@
                         </div>
                         <div class="form-group">
                             <label for="production_code">Kode BoM</label>
-                            <input type="text" class="form-control" name="production_code" required>
+                            <input type="text" class="form-control" name="production_code" id="production_code" readonly>
                         </div>
                         <div class="form-group">
                             <label for="quantity">Jumlah Produksi</label>
@@ -190,33 +190,50 @@
 
 @section('scripts')
     <script>
+        // Fungsi untuk auto-generate kode
+        function initializeBoMCode() {
+            fetch('{{ route('boms.nextCode') }}')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('production_code').value = data.code;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Initialize kode saat modal dibuka
+        document.getElementById('createBoMModal').addEventListener('show.bs.modal', function(e) {
+            initializeBoMCode();
+        });
+
+        // Fungsi untuk menambah baris material
         let rowCount = 1;
         document.querySelector('.btn-add-row').addEventListener('click', function() {
             let table = document.querySelector('#components-table tbody');
             let newRow = document.createElement('tr');
             newRow.innerHTML = `
-            <td>
-                <select name="materials[${rowCount}][material_id]" class="form-control" required>
-                    <option value="">Pilih Material</option>
-                    @foreach ($materials as $material)
-                        <option value="{{ $material->id }}">{{ $material->nama_bahan }}</option>
-                    @endforeach
-                </select>
-            </td>
-            <td><input type="number" name="materials[${rowCount}][quantity]" class="form-control" required></td>
-            <td>
-                <select name="materials[${rowCount}][unit]" class="form-control">
-                    <option value="gram">gram</option>
-                    <option value="meter">meter</option>
-                    <option value="pcs">pcs</option>
-                </select>
-            </td>
-            <td><button type="button" class="btn btn-danger btn-remove-row">-</button></td>
-        `;
+                <td>
+                    <select name="materials[${rowCount}][material_id]" class="form-control" required>
+                        <option value="">Pilih Material</option>
+                        @foreach ($materials as $material)
+                            <option value="{{ $material->id }}">{{ $material->nama_bahan }}</option>
+                        @endforeach
+                    </select>
+                </td>
+                <td><input type="number" name="materials[${rowCount}][quantity]" class="form-control" required></td>
+                <td>
+                    <select name="materials[${rowCount}][unit]" class="form-control">
+                        <option value="gram">gram</option>
+                        <option value="meter">meter</option>
+                        <option value="pcs">pcs</option>
+                    </select>
+                </td>
+                <td><button type="button" class="btn btn-danger btn-remove-row">-</button></td>
+            `;
             table.appendChild(newRow);
             rowCount++;
         });
 
+        // Event delegation untuk tombol remove
         document.addEventListener('click', function(e) {
             if (e.target && e.target.classList.contains('btn-remove-row')) {
                 e.target.closest('tr').remove();
