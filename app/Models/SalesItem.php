@@ -21,7 +21,6 @@ class SalesItem extends Model
     {
         return $this->belongsTo(Sales::class);
     }
-
     public function product()
     {
         return $this->belongsTo(Product::class);

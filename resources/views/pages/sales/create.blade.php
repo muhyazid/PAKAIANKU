@@ -35,10 +35,26 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="sales_date" class="text-light">Tanggal Penjualan</label>
-                    <input type="date" class="form-control @error('sales_date') is-invalid @enderror" name="sales_date"
+                    <label for="expiry_date" class="text-light">Tanggal Kadaluarsa</label>
+                    <input type="date" class="form-control @error('expiry_date') is-invalid @enderror" name="expiry_date"
                         required>
-                    @error('sales_date')
+                    @error('expiry_date')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="billing_address" class="text-light">Alamat Penagihan</label>
+                    <textarea name="billing_address" class="form-control @error('billing_address') is-invalid @enderror" required>{{ old('billing_address') }}</textarea>
+                    @error('billing_address')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="shipping_address" class="text-light">Alamat Pengiriman</label>
+                    <textarea name="shipping_address" class="form-control @error('shipping_address') is-invalid @enderror" required>{{ old('shipping_address') }}</textarea>
+                    @error('shipping_address')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -68,16 +84,16 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="number" name="products[0][quantity]"
+                                    <input type="number" name="items[0][quantity]"
                                         class="form-control quantity-input text-right" step="0.01" min="0.01"
                                         required>
                                 </td>
                                 <td>
-                                    <input type="text" name="products[0][price]"
-                                        class="form-control price-input text-right" readonly>
+                                    <input type="text" name="items[0][price]" class="form-control price-input text-right"
+                                        readonly>
                                 </td>
                                 <td>
-                                    <input type="text" name="products[0][subtotal]"
+                                    <input type="text" name="items[0][subtotal]"
                                         class="form-control subtotal-input text-right" readonly>
                                 </td>
                                 <td class="text-center">
@@ -109,6 +125,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const materialsTable = document.getElementById('materials-table');
+            const form = document.getElementById('sales-form');
 
             // Format mata uang
             function formatCurrency(number) {
@@ -120,32 +137,10 @@
                 });
             }
 
-            // Update harga dan subtotal saat produk dipilih
-            function handleItemSelect(select) {
-                const row = select.closest('tr');
-                const selectedOption = select.options[select.selectedIndex];
-
-                if (selectedOption.value) {
-                    const price = selectedOption.dataset.price;
-
-                    // Update harga produk
-                    const priceInput = row.querySelector('.price-input');
-                    priceInput.value = price;
-
-                    // Hitung subtotal jika quantity ada
-                    const quantityInput = row.querySelector('.quantity-input');
-                    if (quantityInput.value) {
-                        calculateSubtotal(row);
-                    }
-                }
-            }
-
             // Hitung subtotal untuk baris
             function calculateSubtotal(row) {
-                const quantity = parseFloat(row.querySelector('.quantity-input').value);
-                const price = parseFloat(row.querySelector('.price-input').value);
-
-                if (!quantity || !price) return;
+                const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+                const price = parseFloat(row.querySelector('.price-input').value) || 0;
 
                 const subtotal = quantity * price;
 
@@ -161,22 +156,49 @@
             function updateTotalAmount() {
                 let total = 0;
                 materialsTable.querySelectorAll('.subtotal-input').forEach(subtotalInput => {
-                    total += parseFloat(subtotalInput.value.replace(/[^0-9.-]+/g, "")) || 0;
+                    if (subtotalInput.id !== 'total-amount') {
+                        total += parseFloat(subtotalInput.value.replace(/[^0-9.-]+/g, "")) || 0;
+                    }
                 });
                 document.getElementById('total-amount').value = formatCurrency(total);
             }
 
-            // Event untuk menambahkan row
-            materialsTable.addEventListener('click', function(event) {
-                if (event.target.classList.contains('btn-add-row')) {
-                    const newRow = materialsTable.querySelector('tbody tr').cloneNode(true);
-                    newRow.querySelectorAll('input').forEach(input => input.value = '');
-                    newRow.querySelector('.btn-add-row').addEventListener('click', function() {
-                        materialsTable.querySelector('tbody').appendChild(newRow);
-                    });
+            function addNewRow() {
+                const newRow = materialsTable.querySelector('tbody tr').cloneNode(true);
+                newRow.querySelectorAll('input').forEach(input => input.value = '');
+                const newIndex = materialsTable.querySelectorAll('tbody tr').length;
 
-                    // Append new row
-                    materialsTable.querySelector('tbody').appendChild(newRow);
+                newRow.querySelectorAll('[name^="items[0]"]').forEach(element => {
+                    element.name = element.name.replace('[0]', `[${newIndex}]`);
+                });
+
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'btn btn-danger btn-sm btn-delete-row';
+                deleteButton.textContent = '-';
+                deleteButton.onclick = function() {
+                    newRow.remove();
+                    updateTotalAmount();
+                };
+
+                const actionCell = newRow.querySelector('td:last-child');
+                actionCell.innerHTML = '';
+                actionCell.appendChild(deleteButton);
+
+                materialsTable.querySelector('tbody').appendChild(newRow);
+            }
+
+            // Handle pemilihan item
+            materialsTable.addEventListener('change', function(event) {
+                if (event.target.classList.contains('item-select')) {
+                    const row = event.target.closest('tr');
+                    const priceInput = row.querySelector('.price-input');
+                    const selectedOption = event.target.options[event.target.selectedIndex];
+
+                    if (selectedOption.value) {
+                        priceInput.value = selectedOption.dataset.price;
+                        calculateSubtotal(row);
+                    }
                 }
             });
 
@@ -187,39 +209,49 @@
                 }
             });
 
-            // Handle pemilihan item
-            materialsTable.addEventListener('change', function(event) {
-                if (event.target.classList.contains('item-select')) {
-                    handleItemSelect(event.target);
+            materialsTable.addEventListener('click', function(event) {
+                if (event.target.classList.contains('btn-add-row')) {
+                    addNewRow();
+                } else if (event.target.classList.contains('btn-delete-row')) {
+                    event.target.closest('tr').remove();
+                    updateTotalAmount();
                 }
             });
 
-            // Submit form menggunakan AJAX
-            const form = document.getElementById('sales-form');
+            // Submit form
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                // Validasi agar ada item yang dipilih
-                if (materialsTable.querySelectorAll('.item-select').length === 0) {
-                    alert("Silakan tambahkan barang.");
+                // Validasi minimal satu item
+                const items = form.querySelectorAll('select[name^="items["][name$="[product_id]"]');
+                if (items.length === 0 || !Array.from(items).some(select => select.value !== '')) {
+                    alert("Silakan tambahkan minimal satu barang.");
                     return;
                 }
 
+                // Submit form menggunakan fetch
                 fetch(form.action, {
                         method: 'POST',
                         body: new FormData(form),
                         headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                .getAttribute('content')
+                            'Accept': 'application/json'
                         }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => {
+                                throw new Error(JSON.stringify(errorData));
+                            });
+                        }
+                        return response.json();
+                    })
                     .then(data => {
-                        if (data.success) {
-                            window.location.href = '{{ route('sales.index') }}'; // Redirect ke index
-                        }
+                        window.location.href = '{{ route('sales.index') }}';
                     })
-                    .catch(error => console.log(error));
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan: ' + error.message);
+                    });
             });
         });
     </script>

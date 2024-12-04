@@ -49,3 +49,9 @@ Route::post('/suppliers/store-price', [SuppliersController::class, 'storeMateria
 Route::resource('customers', CustomerController::class);
 
 Route::resource('sales', SalesController::class);
+Route::get('/sales/{id}/confirm', [SalesController::class, 'confirmSales'])->name('sales.confirm');
+Route::get('/sales/{id}/payment', [SalesController::class, 'processPayment'])->name('sales.payment');
+Route::get('/sales/{id}/generate-invoice', [SalesController::class, 'generateInvoice'])->name('sales.generateInvoice');
+Route::get('/sales/{id}/check-stock', [SalesController::class, 'checkStockAvailability'])->name('sales.checkStock');
+Route::get('/sales/{id}/deliver', [SalesController::class, 'deliverSales'])->name('sales.deliver');
+

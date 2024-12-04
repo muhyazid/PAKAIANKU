@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class SalesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+ 
     public function index()
     {
         //
@@ -19,15 +17,10 @@ class SalesController extends Controller
         return view('pages.sales.index', compact('sales'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
         $customers = Customer::all();
         $products = Product::all();
-
         // Generate Sales Code
         $lastSales = Sales::latest()->first();
         $lastNumber = $lastSales ? intval(substr($lastSales->sales_code, 5)) : 0;
@@ -35,80 +28,84 @@ class SalesController extends Controller
         $salesCode = 'SALES' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
         
         // $items=[];
-
         return view('pages.sales.create', compact('customers', 'products', 'salesCode'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
-        $request->validate([
-            'sales_code' => 'required|unique:sales,sales_code',
-            'customer_id' => 'required|exists:customers,id',
-            'billing_address' => 'required',
-            'shipping_address' => 'required',
-            'expiry_date' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|numeric|min:1',
-            'items.*.price' => 'required|numeric|min:0.01',
-        ]);
-
-        // Membuat Sales
-        $sales = Sales::create([
-            'sales_code' => $request->sales_code,
-            'customer_id' => $request->customer_id,
-            'billing_address' => $request->billing_address,
-            'shipping_address' => $request->shipping_address,
-            'expiry_date' => $request->expiry_date,
-            'status' => 'sales_order',
-        ]);
-
-        // Menyimpan Item Sales
-        foreach ($request->items as $item) {
-            $product = Product::findOrFail($item['product_id']);
-            $subtotal = $product->price * $item['quantity'];
-            $sales->items()->create([
-                'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'price' => $product->price,
-                'subtotal' => $subtotal,
+        try {
+            $validatedData = $request->validate([
+                'sales_code' => 'required|unique:sales,sales_code',
+                'customer_id' => 'required|exists:customers,id',
+                'billing_address' => 'required',
+                'shipping_address' => 'required',
+                'expiry_date' => 'required|date',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity' => 'required|numeric|min:0.01',
+                'items.*.price' => 'required|numeric|min:0.01',
             ]);
-        }
 
-        return redirect()->route('sales.index')->with('success', 'Sales Order berhasil dibuat.');
+            // Membuat Sales
+            $sales = Sales::create([
+                'sales_code' => $validatedData['sales_code'],
+                'customer_id' => $validatedData['customer_id'],
+                'billing_address' => $validatedData['billing_address'],
+                'shipping_address' => $validatedData['shipping_address'],
+                'expiry_date' => $validatedData['expiry_date'],
+                'status' => 'sales_order',
+            ]);
+
+            // Menyimpan Item Sales
+            foreach ($validatedData['items'] as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                $subtotal = $product->price * $item['quantity'];
+                $sales->items()->create([
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $product->price,
+                    'subtotal' => $subtotal,
+                ]);
+            }
+
+            // Return JSON response for AJAX
+            return response()->json([
+                'success' => true, 
+                'message' => 'Sales Order berhasil dibuat.',
+                'redirect' => route('sales.index')
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            return response()->json([
+                'success' => false, 
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            // Handle other errors
+            return response()->json([
+                'success' => false, 
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
+   
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+
     public function edit(string $id)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         //
@@ -116,32 +113,59 @@ class SalesController extends Controller
 
     public function confirmSales($id)
     {
-        $sales = Sales::findOrFail($id);
-        $sales->status = 'waiting_payment';
-        $sales->save();
+        try {
+            // Cari sales berdasarkan ID
+            $sales = Sales::findOrFail($id);
 
-        return response()->json(['success' => true, 'message' => 'Sales Order berhasil dikirim']);
+            // Pastikan status saat ini adalah 'sales_order'
+            if ($sales->status !== 'sales_order') {
+                return redirect()->route('sales.index')
+                    ->with('error', 'Status sales order tidak valid untuk dikonfirmasi.');
+            }
+            // Ubah status menjadi 'waiting_payment'
+            $sales->status = 'waiting_payment';
+            $sales->save();
+
+            // Redirect dengan pesan sukses
+            return redirect()->route('sales.index')
+                ->with('success', 'Sales Order berhasil dikirim.');
+        } catch (\Exception $e) {
+            // Tangani error
+            return redirect()->route('sales.index')
+                ->with('error', 'Gagal mengkonfirmasi sales: ' . $e->getMessage());
+        }
     }
     public function processPayment(Request $request, $id)
     {
-        $sales = Sales::with('items')->findOrFail($id);
+        try {
+            // Cari sales dengan relasi items
+            $sales = Sales::with('items')->findOrFail($id);
 
-        if ($sales->status !== 'waiting_payment') {
-            return response()->json(['error' => 'Status Sales Order belum valid untuk pembayaran!'], 400);
+            // Pastikan status saat ini adalah 'waiting_payment'
+            if ($sales->status !== 'waiting_payment') {
+                return redirect()->route('sales.index')
+                    ->with('error', 'Status sales order tidak valid untuk pembayaran.');
+            }
+
+            // Ubah status menjadi 'done'
+            $sales->status = 'done';
+            $sales->save();
+
+            // Kurangi stok produk
+            foreach ($sales->items as $item) {
+                $product = $item->product;
+                $product->stock -= $item->quantity;
+                $product->save();
+            }
+
+            // Redirect dengan pesan sukses
+            return redirect()->route('sales.index')
+                ->with('success', 'Pembayaran berhasil diproses.');
+        } catch (\Exception $e) {
+            // Tangani error
+            return redirect()->route('sales.index')
+                ->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage());
         }
-
-        // Proses pembayaran
-        $sales->status = 'done';
-        $sales->save();
-
-        // Mengupdate stok produk
-        foreach ($sales->items as $item) {
-            $product = $item->product;
-            $product->stock -= $item->quantity; // Mengurangi stok
-            $product->save();
-        }
-
-        return response()->json(['success' => true, 'message' => 'Pembayaran berhasil diproses']);
     }
 
     public function generateInvoice($id)
@@ -152,5 +176,88 @@ class SalesController extends Controller
         $pdf->loadView('pages.sales.invoice', compact('sales'));
 
         return $pdf->download('invoice-' . $sales->sales_code . '.pdf');
+    }
+
+    public function checkStockAvailability($id)
+    {
+        try {
+            $sales = Sales::with('items.product')->findOrFail($id);
+
+            // Pastikan status saat ini adalah 'waiting_payment'
+            if ($sales->status !== 'waiting_payment') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status sales order tidak valid untuk pengecekan stok.'
+                ], 400);
+            }
+
+            $stockAvailability = [];
+            $isAllAvailable = true;
+
+            foreach ($sales->items as $item) {
+                $product = $item->product;
+                $requestedQuantity = $item->quantity;
+                $currentStock = $product->stock;
+
+                $availability = [
+                    'product_name' => $product->name,
+                    'requested_quantity' => $requestedQuantity,
+                    'current_stock' => $currentStock,
+                    'is_available' => $currentStock >= $requestedQuantity
+                ];
+
+                $stockAvailability[] = $availability;
+
+                if ($currentStock < $requestedQuantity) {
+                    $isAllAvailable = false;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'is_all_available' => $isAllAvailable,
+                'stock_availability' => $stockAvailability
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengecek stok: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deliverSales($id)
+    {
+        try {
+            $sales = Sales::with('items')->findOrFail($id);
+
+            // Pastikan status saat ini adalah 'waiting_payment'
+            if ($sales->status !== 'waiting_payment') {
+                return redirect()->route('sales.index')
+                    ->with('error', 'Status sales order tidak valid untuk dikirim.');
+            }
+
+            // Kurangi stok produk
+            foreach ($sales->items as $item) {
+                $product = $item->product;
+                if ($product->stock < $item->quantity) {
+                    return redirect()->route('sales.index')
+                        ->with('error', 'Stok produk tidak mencukupi untuk pengiriman.');
+                }
+                $product->stock -= $item->quantity;
+                $product->save();
+            }
+
+            // Ubah status menjadi 'delivered'
+            $sales->status = 'delivered';
+            $sales->save();
+
+            return redirect()->route('sales.index')
+                ->with('success', 'Sales Order berhasil dikirim.');
+        } catch (\Exception $e) {
+            return redirect()->route('sales.index')
+                ->with('error', 'Gagal mengirim sales: ' . $e->getMessage());
+        }
     }
 }
