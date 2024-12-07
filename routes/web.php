@@ -12,7 +12,6 @@ use App\Http\Controllers\ManufacturingOrderController;
 
 Route::resource('rfq', RfQController::class);
 
-// coba coba
 Route::get('/dashboard', function ()  {
     return view('pages.dashboard');
 });
