@@ -118,12 +118,12 @@ class SalesController extends Controller
             $sales = Sales::findOrFail($id);
 
             // Pastikan status saat ini adalah 'sales_order'
-            if ($sales->status !== 'sales_order') {
+            if ($sales->status !== 'quotation') {
                 return redirect()->route('sales.index')
                     ->with('error', 'Status sales order tidak valid untuk dikonfirmasi.');
             }
             // Ubah status menjadi 'waiting_payment'
-            $sales->status = 'waiting_payment';
+            $sales->status = 'sales_order';
             $sales->save();
 
             // Redirect dengan pesan sukses
@@ -138,31 +138,19 @@ class SalesController extends Controller
     public function processPayment(Request $request, $id)
     {
         try {
-            // Cari sales dengan relasi items
-            $sales = Sales::with('items')->findOrFail($id);
+            $sales = Sales::findOrFail($id);
 
-            // Pastikan status saat ini adalah 'waiting_payment'
-            if ($sales->status !== 'waiting_payment') {
+            if ($sales->status !== 'delivered') {
                 return redirect()->route('sales.index')
-                    ->with('error', 'Status sales order tidak valid untuk pembayaran.');
+                    ->with('error', 'Sales Order tidak valid untuk pembayaran.');
             }
 
-            // Ubah status menjadi 'done'
             $sales->status = 'done';
             $sales->save();
 
-            // Kurangi stok produk
-            foreach ($sales->items as $item) {
-                $product = $item->product;
-                $product->stock -= $item->quantity;
-                $product->save();
-            }
-
-            // Redirect dengan pesan sukses
             return redirect()->route('sales.index')
                 ->with('success', 'Pembayaran berhasil diproses.');
         } catch (\Exception $e) {
-            // Tangani error
             return redirect()->route('sales.index')
                 ->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage());
         }
@@ -184,7 +172,7 @@ class SalesController extends Controller
             $sales = Sales::with('items.product')->findOrFail($id);
 
             // Pastikan status saat ini adalah 'waiting_payment'
-            if ($sales->status !== 'waiting_payment') {
+            if ($sales->status !== 'sales_order') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Status sales order tidak valid untuk pengecekan stok.'
@@ -233,7 +221,7 @@ class SalesController extends Controller
             $sales = Sales::with('items')->findOrFail($id);
 
             // Pastikan status saat ini adalah 'waiting_payment'
-            if ($sales->status !== 'waiting_payment') {
+            if ($sales->status !== 'sales_order') {
                 return redirect()->route('sales.index')
                     ->with('error', 'Status sales order tidak valid untuk dikirim.');
             }

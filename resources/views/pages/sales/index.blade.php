@@ -56,13 +56,13 @@
                             </tr>
 
                             <!-- Modal Konfirmasi Pengiriman (Kirim) -->
+                            <!-- Modal untuk Konfirmasi Kirim -->
                             <div class="modal fade" id="modalConfirm{{ $sale->id }}" tabindex="-1" role="dialog"
                                 aria-labelledby="modalConfirmLabel{{ $sale->id }}" aria-hidden="true">
                                 <div class="modal-dialog" role="document">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="modalConfirmLabel{{ $sale->id }}">Konfirmasi
-                                                Pengiriman</h5>
+                                            <h5 class="modal-title">Konfirmasi Pengiriman</h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
@@ -80,6 +80,7 @@
                                 </div>
                             </div>
 
+                            {{-- modal cek stok --}}
                             <div class="modal fade" id="stockCheckModal" tabindex="-1" role="dialog" aria-hidden="true">
                                 <div class="modal-dialog modal-lg" role="document">
                                     <div class="modal-content">
