@@ -1,5 +1,5 @@
 <?php
-// Tes
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BoMController;
 use App\Http\Controllers\RfQController;
