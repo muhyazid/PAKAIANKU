@@ -1,14 +1,18 @@
 @extends('layouts.master')
 
-@section('title', 'Daftar Sales Orders')
+@section('title', 'Daftar Sales')
+@php
+    use App\Models\Sales; // Import model Sales di view
+@endphp
 
 @section('content')
     <div class="page-header">
-        <h3 class="page-title text-light">Daftar Sales Orders</h3>
+        <h3 class="page-title text-light">Daftar Sales</h3>
         <div class="mb-3">
-            <a href="{{ route('sales.create') }}" class="btn btn-primary">Tambah Sales Order</a>
+            <a href="{{ route('sales.create') }}" class="btn btn-primary">Tambah Sales</a>
         </div>
     </div>
+
 
     <div class="card">
         <div class="card-body">
@@ -18,7 +22,7 @@
                         <tr>
                             <th>Kode Sales</th>
                             <th>Customer</th>
-                            <th>Tanggal</th>
+                            <th>Produk</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -27,149 +31,211 @@
                         @foreach ($sales as $sale)
                             <tr>
                                 <td>{{ $sale->sales_code }}</td>
-                                <td>{{ $sale->customer->nama_customer }}</td>
-                                <td>{{ $sale->created_at->format('d/m/Y') }}</td>
+                                <td>{{ $sale->customer->nama_customer ?? 'N/A' }}</td>
+                                <td>
+                                    <ul>
+                                        @foreach ($sale->items as $item)
+                                            <li class="product-item">
+                                                <span class="product-name">{{ $item->product->nama_produk }} - </span>
+                                                <span class="product-quantity">{{ $item->quantity }}
+                                                    {{ $item->product->unit }} Unit</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </td>
                                 <td>
                                     <span
-                                        class="badge badge-{{ $sale->status === 'sales_order' ? 'warning' : ($sale->status === 'waiting_payment' ? 'info' : 'success') }}">
-                                        {{ ucfirst(str_replace('_', ' ', $sale->status)) }}
+                                        class="badge badge-{{ $sale->status === Sales::STATUS['QUOTATION']
+                                            ? 'warning'
+                                            : ($sale->status === Sales::STATUS['SALES_ORDER']
+                                                ? 'info'
+                                                : ($sale->status === Sales::STATUS['DELIVERED']
+                                                    ? 'primary'
+                                                    : ($sale->status === Sales::STATUS['DONE']
+                                                        ? 'success'
+                                                        : 'secondary'))) }}">
+                                        {{ ucwords(str_replace('_', ' ', $sale->status)) }}
                                     </span>
                                 </td>
                                 <td>
-                                    @if ($sale->status === 'waiting_payment')
-                                        <button class="btn btn-sm btn-warning check-stock-btn"
-                                            data-id="{{ $sale->id }}">Cek Stok</button>
-                                    @endif
-                                    @if ($sale->status === 'sales_order')
-                                        <button class="btn btn-sm btn-success" data-toggle="modal"
-                                            data-target="#modalConfirm{{ $sale->id }}">Kirim</button>
-                                    @endif
-                                    @if ($sale->status === 'waiting_payment')
-                                        <a href="{{ route('sales.payment', $sale->id) }}"
-                                            class="btn btn-sm btn-primary">Proses Pembayaran</a>
-                                    @endif
-                                    @if ($sale->status === 'done')
-                                        <button class="btn btn-sm btn-info" data-toggle="modal"
-                                            data-target="#modalInvoice{{ $sale->id }}">Cetak Invoice</button>
-                                    @endif
+                                    <div class="btn-group">
+                                        @switch($sale->status)
+                                            @case(Sales::STATUS['QUOTATION'])
+                                                <button onclick="confirmSales({{ $sale->id }})" class="btn btn-sm btn-success">
+                                                    Konfirmasi
+                                                </button>
+                                            @break
+
+                                            @case(Sales::STATUS['SALES_ORDER'])
+                                                <button onclick="checkStock({{ $sale->id }})" class="btn btn-sm btn-info">
+                                                    Cek Stok
+                                                </button>
+                                            @break
+
+                                            @case(Sales::STATUS['DELIVERED'])
+                                                <button onclick="showPaymentModal({{ $sale->id }})"
+                                                    class="btn btn-sm btn-primary">
+                                                    Bayar
+                                                </button>
+                                            @break
+
+                                            @case(Sales::STATUS['DONE'])
+                                                <a href="{{ route('sales.generateInvoice', $sale->id) }}"
+                                                    class="btn btn-sm btn-success">
+                                                    Cetak Invoice
+                                                </a>
+                                            @break
+                                        @endswitch
+                                    </div>
                                 </td>
                             </tr>
-
-                            <!-- Modal Konfirmasi Pengiriman (Kirim) -->
-                            <!-- Modal untuk Konfirmasi Kirim -->
-                            <div class="modal fade" id="modalConfirm{{ $sale->id }}" tabindex="-1" role="dialog"
-                                aria-labelledby="modalConfirmLabel{{ $sale->id }}" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Konfirmasi Pengiriman</h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Apakah Anda yakin ingin mengirim order ini?
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Tutup</button>
-                                            <a href="{{ route('sales.confirm', $sale->id) }}"
-                                                class="btn btn-success">Kirim</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- modal cek stok --}}
-                            <div class="modal fade" id="stockCheckModal" tabindex="-1" role="dialog" aria-hidden="true">
-                                <div class="modal-dialog modal-lg" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Cek Ketersediaan Stok</h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <!-- Stock availability table will be dynamically inserted here -->
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Tutup</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Modal Cetak Invoice -->
-                            <div class="modal fade" id="modalInvoice{{ $sale->id }}" tabindex="-1" role="dialog"
-                                aria-labelledby="modalInvoiceLabel{{ $sale->id }}" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="modalInvoiceLabel{{ $sale->id }}">Invoice Sales
-                                                Order</h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Invoice untuk Sales Order ini siap dicetak.
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Tutup</button>
-                                            <a href="{{ route('sales.generateInvoice', $sale->id) }}"
-                                                class="btn btn-info">Cetak Invoice</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <!-- Modal Stock -->
+    <div class="modal fade" id="stockModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cek Ketersediaan Stok</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="stockModalBody">
+                    <!-- Stok akan dimuat secara dinamis -->
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="selectedSalesId">
+                    <button id="deliverButton" class="btn btn-success" style="display:none;"
+                        onclick="deliverSales()">Kirim</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pembayaran -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pilih Metode Pembayaran</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="payment_method" id="cashPayment"
+                            value="cash">
+                        <label class="form-check-label" for="cashPayment">Cash</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="payment_method" id="transferPayment"
+                            value="transfer">
+                        <label class="form-check-label" for="transferPayment">Transfer</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="selectedSalesId">
+                    <button class="btn btn-primary" onclick="processPayment()">Bayar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        $(document).ready(function() {
-            $('.check-stock-btn').on('click', function() {
-                var salesId = $(this).data('id');
-                $.ajax({
-                    url: '/sales/' + salesId + '/check-stock',
-                    method: 'GET',
-                    success: function(response) {
-                        if (response.success) {
-                            var modalContent = '<table class="table">' +
-                                '<thead><tr><th>Produk</th><th>Stok Tersedia</th><th>Jumlah Dibutuhkan</th><th>Status</th></tr></thead>' +
-                                '<tbody>';
-
-                            response.stock_availability.forEach(function(item) {
-                                modalContent += '<tr>' +
-                                    '<td>' + item.product_name + '</td>' +
-                                    '<td>' + item.current_stock + '</td>' +
-                                    '<td>' + item.requested_quantity + '</td>' +
-                                    '<td>' + (item.is_available ? 'Tersedia' :
-                                        'Tidak Tersedia') + '</td>' +
-                                    '</tr>';
-                            });
-
-                            modalContent += '</tbody></table>';
-
-                            if (response.is_all_available) {
-                                modalContent +=
-                                    '<div class="alert alert-success mt-3">Semua produk tersedia untuk dikirim.</div>';
-                            } else {
-                                modalContent +=
-                                    '<div class="alert alert-danger mt-3">Beberapa produk tidak tersedia untuk dikirim.</div>';
-                            }
-
-                            $('#stockCheckModal .modal-body').html(modalContent);
-                            $('#stockCheckModal').modal('show');
-                        }
-                    }
-                });
+        function confirmSales(salesId) {
+            $.ajax({
+                url: `{{ route('sales.confirm', ['id' => ':id']) }}`.replace(':id', salesId),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.message);
+                }
             });
-        });
+        }
+
+        function checkStock(salesId) {
+            $.ajax({
+                url: `{{ route('sales.checkStock', ['id' => ':id']) }}`.replace(':id', salesId),
+                type: 'GET',
+                success: function(response) {
+                    let stockHtml = '';
+                    let allAvailable = true;
+
+                    response.stock_availability.forEach(item => {
+                        stockHtml += `
+                        <p>${item.nama_produk}: 
+                           Diminta ${item.requested_quantity}, 
+                           Stok ${item.current_stock} 
+                           (${item.is_available ? 'Tersedia' : 'Tidak Tersedia'})
+                        </p>`;
+
+                        if (!item.is_available) allAvailable = false;
+                    });
+
+                    $('#stockModalBody').html(stockHtml);
+                    $('#deliverButton').toggle(allAvailable);
+                    $('#selectedSalesId').val(salesId);
+                    $('#stockModal').modal('show');
+                }
+            });
+        }
+
+        function deliverSales() {
+            const salesId = $('#selectedSalesId').val();
+            $.ajax({
+                url: `{{ route('sales.deliver', ['id' => ':id']) }}`.replace(':id', salesId),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.message);
+                }
+            });
+        }
+
+        function showPaymentModal(salesId) {
+            $('#selectedSalesId').val(salesId);
+            $('#paymentModal').modal('show');
+        }
+
+        function processPayment() {
+            const salesId = $('#selectedSalesId').val();
+            const paymentMethod = $('input[name="payment_method"]:checked').val();
+
+            if (!paymentMethod) {
+                alert('Pilih metode pembayaran');
+                return;
+            }
+
+            $.ajax({
+                url: `{{ route('sales.payment', ['id' => ':id']) }}`.replace(':id', salesId),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    payment_method: paymentMethod
+                },
+                success: function(response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.message);
+                }
+            });
+        }
     </script>
 @endsection

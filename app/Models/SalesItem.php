@@ -25,4 +25,11 @@ class SalesItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    // Mutator untuk menghitung subtotal
+    public function calculateSubtotal()
+    {
+        $this->subtotal = $this->quantity * $this->price;
+        return $this->subtotal;
+    }
 }

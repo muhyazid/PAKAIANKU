@@ -6,15 +6,18 @@ use App\Models\Sales;
 use App\Models\Product;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class SalesController extends Controller
 {
  
     public function index()
     {
-        //
+        $sales = Sales::all();
         $sales = Sales::with('customer', 'items.product')->get();
-        return view('pages.sales.index', compact('sales'));
+        $salesStatuses = Sales::STATUS;
+        return view('pages.sales.index', compact('sales', 'salesStatuses'));
     }
 
     public function create()
@@ -111,48 +114,78 @@ class SalesController extends Controller
         //
     }
 
-    public function confirmSales($id)
+    public function confirmSales(Request $request, $id)
     {
         try {
             // Cari sales berdasarkan ID
             $sales = Sales::findOrFail($id);
 
-            // Pastikan status saat ini adalah 'sales_order'
-            if ($sales->status !== 'quotation') {
-                return redirect()->route('sales.index')
-                    ->with('error', 'Status sales order tidak valid untuk dikonfirmasi.');
+           // Validasi status
+            if ($sales->status !== Sales::STATUS['QUOTATION']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status sales order tidak valid untuk dikonfirmasi.'
+                ], 400);
             }
-            // Ubah status menjadi 'waiting_payment'
-            $sales->status = 'sales_order';
+
+            // Hitung total amount
+            $totalAmount = $sales->items->sum(function ($item) {
+                return $item->quantity * $item->price;
+            });
+
+            $sales->status = Sales::STATUS['SALES_ORDER'];
+            $sales->total_amount = $totalAmount;
             $sales->save();
 
-            // Redirect dengan pesan sukses
-            return redirect()->route('sales.index')
-                ->with('success', 'Sales Order berhasil dikirim.');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sales Order berhasil dikirim.'
+            ]);
         } catch (\Exception $e) {
-            // Tangani error
-            return redirect()->route('sales.index')
-                ->with('error', 'Gagal mengkonfirmasi sales: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengkonfirmasi sales: ' . $e->getMessage()
+            ], 500);
         }
     }
     public function processPayment(Request $request, $id)
     {
         try {
             $sales = Sales::findOrFail($id);
+            $paymentMethod = $request->input('payment_method');
 
-            if ($sales->status !== 'delivered') {
-                return redirect()->route('sales.index')
-                    ->with('error', 'Sales Order tidak valid untuk pembayaran.');
+             // Validasi metode pembayaran
+            if (!in_array($paymentMethod, [
+                Sales::PAYMENT_METHODS['CASH'], 
+                Sales::PAYMENT_METHODS['TRANSFER']
+            ])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Metode pembayaran tidak valid.'
+                ], 400);
             }
 
-            $sales->status = 'done';
+            if ($sales->status !== Sales::STATUS['DELIVERED']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sales Order tidak valid untuk pembayaran.'
+                ], 400);
+            }
+
+            $sales->status = Sales::STATUS['DONE'];
+            $sales->payment_method = $paymentMethod;
             $sales->save();
 
-            return redirect()->route('sales.index')
-                ->with('success', 'Pembayaran berhasil diproses.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran berhasil diproses.'
+            ]);
         } catch (\Exception $e) {
-            return redirect()->route('sales.index')
-                ->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses pembayaran: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -171,8 +204,8 @@ class SalesController extends Controller
         try {
             $sales = Sales::with('items.product')->findOrFail($id);
 
-            // Pastikan status saat ini adalah 'waiting_payment'
-            if ($sales->status !== 'sales_order') {
+            
+            if ($sales->status !== Sales::STATUS['SALES_ORDER']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Status sales order tidak valid untuk pengecekan stok.'
@@ -188,7 +221,7 @@ class SalesController extends Controller
                 $currentStock = $product->stock;
 
                 $availability = [
-                    'product_name' => $product->name,
+                    'product_name' => $product->nama_produk,
                     'requested_quantity' => $requestedQuantity,
                     'current_stock' => $currentStock,
                     'is_available' => $currentStock >= $requestedQuantity
@@ -220,32 +253,38 @@ class SalesController extends Controller
         try {
             $sales = Sales::with('items')->findOrFail($id);
 
-            // Pastikan status saat ini adalah 'waiting_payment'
-            if ($sales->status !== 'sales_order') {
-                return redirect()->route('sales.index')
-                    ->with('error', 'Status sales order tidak valid untuk dikirim.');
+            if ($sales->status !== Sales::STATUS['SALES_ORDER']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status sales order tidak valid untuk dikirim.'
+                ], 400);
             }
 
             // Kurangi stok produk
             foreach ($sales->items as $item) {
                 $product = $item->product;
                 if ($product->stock < $item->quantity) {
-                    return redirect()->route('sales.index')
-                        ->with('error', 'Stok produk tidak mencukupi untuk pengiriman.');
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Stok produk {$product->nama_produk} tidak mencukupi."
+                    ], 400);
                 }
                 $product->stock -= $item->quantity;
                 $product->save();
             }
 
-            // Ubah status menjadi 'delivered'
-            $sales->status = 'delivered';
+            $sales->status = Sales::STATUS['DELIVERED'];
             $sales->save();
 
-            return redirect()->route('sales.index')
-                ->with('success', 'Sales Order berhasil dikirim.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Sales Order berhasil dikirim.'
+            ]);
         } catch (\Exception $e) {
-            return redirect()->route('sales.index')
-                ->with('error', 'Gagal mengirim sales: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim sales: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
