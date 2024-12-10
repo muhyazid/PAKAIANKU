@@ -59,3 +59,6 @@ Route::post('/sales/{id}/payment', [SalesController::class, 'processPayment'])->
 Route::get('/sales/{id}/generate-invoice', [SalesController::class, 'generateInvoice'])->name('sales.generateInvoice');
 Route::get('/sales/{id}/check-stock', [SalesController::class, 'checkStockAvailability'])->name('sales.checkStock');
 Route::post('/sales/{id}/deliver', [SalesController::class, 'deliverSales'])->name('sales.deliver');
+
+// baru tadi pagi jam 5 05:31 10 desember
+// Route::post('/sales/deliver/{id}', [SalesController::class, 'deliverSales'])->name('sales.deliver');

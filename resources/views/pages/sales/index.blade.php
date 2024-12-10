@@ -59,6 +59,12 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
+                                        <a href="{{ route('sales.edit', $sale->id) }}" class="btn btn-sm btn-warning mr-1">
+                                            Edit
+                                        </a>
+                                        <button onclick="confirmDelete({{ $sale->id }})" class="btn btn-sm btn-danger">
+                                            Hapus
+                                        </button>
                                         @switch($sale->status)
                                             @case(Sales::STATUS['QUOTATION'])
                                                 <button onclick="confirmSales({{ $sale->id }})" class="btn btn-sm btn-success">
@@ -109,8 +115,9 @@
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" id="selectedSalesId">
-                    <button id="deliverButton" class="btn btn-success" style="display:none;"
+                    {{-- <button id="deliverButton" class="btn btn-success" style="display: none;"
                         onclick="deliverSales()">Kirim</button>
+                    <button class="btn btn-secondary" data-dismiss="modal">Tutup</button> --}}
                 </div>
             </div>
         </div>
@@ -153,11 +160,16 @@
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
-                    alert(response.message);
-                    location.reload();
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
                 },
-                error: function(xhr) {
-                    alert(xhr.responseJSON.message);
+                error: function(xhr, status, error) {
+                    console.error(xhr.responseText); // Log error untuk debugging
+                    alert('Terjadi kesalahan: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
                 }
             });
         }
@@ -166,43 +178,93 @@
             $.ajax({
                 url: `{{ route('sales.checkStock', ['id' => ':id']) }}`.replace(':id', salesId),
                 type: 'GET',
+                dataType: 'json',
                 success: function(response) {
-                    let stockHtml = '';
-                    let allAvailable = true;
+                    if (response.success) {
+                        let stockHtml = `
+                            <div class="row mb-3">
+                                <div class="col-4"><strong>Kode Sales</strong></div>
+                                <div class="col-8">${response.sales_code}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4"><strong>Nama Sales</strong></div>
+                                <div class="col-8">${response.sales_name}</div>
+                            </div>
+                            <table class="table table-bordered table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Produk</th>
+                                        <th>Stok Saat Ini</th>
+                                        <th>Jumlah Dibeli</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
 
-                    response.stock_availability.forEach(item => {
-                        stockHtml += `
-                        <p>${item.nama_produk}: 
-                           Diminta ${item.requested_quantity}, 
-                           Stok ${item.current_stock} 
-                           (${item.is_available ? 'Tersedia' : 'Tidak Tersedia'})
-                        </p>`;
+                        let allAvailable = true;
+                        response.stock_availability.forEach(item => {
+                            const status = item.is_available ?
+                                '<i class="fas fa-check-circle text-success"></i>' :
+                                '<i class="fas fa-times-circle text-danger"></i>';
 
-                        if (!item.is_available) allAvailable = false;
-                    });
+                            stockHtml += `
+                                <tr>
+                                    <td>${item.nama_produk}</td>
+                                    <td>${item.current_stock}</td>
+                                    <td>${item.requested_quantity}</td>
+                                    <td class="text-center">${status}</td>
+                                </tr>`;
 
-                    $('#stockModalBody').html(stockHtml);
-                    $('#deliverButton').toggle(allAvailable);
-                    $('#selectedSalesId').val(salesId);
-                    $('#stockModal').modal('show');
+                            if (!item.is_available) allAvailable = false;
+                        });
+
+                        stockHtml += `</tbody></table>`;
+
+                        $('#stockModalBody').html(stockHtml);
+
+                        // Logika tombol modal
+                        const modalFooterHtml = `
+                            <input type="hidden" id="selectedSalesId" value="${salesId}">
+                            <button id="deliverButton" class="btn btn-success" style="display: ${allAvailable ? 'inline-block' : 'none'};" onclick="deliverSales(${salesId})">Kirim</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                        `;
+
+                        // Update footer modal
+                        $('.modal-footer').html(modalFooterHtml);
+
+                        $('#stockModal').modal('show');
+                    } else {
+                        alert(response.message || 'Gagal mengecek stok');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error(xhr.responseText); // Log error untuk debugging
+                    alert('Terjadi kesalahan: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
                 }
             });
         }
 
-        function deliverSales() {
-            const salesId = $('#selectedSalesId').val();
+
+        function deliverSales(salesId) {
             $.ajax({
-                url: `{{ route('sales.deliver', ['id' => ':id']) }}`.replace(':id', salesId),
+                url: `{{ route('sales.deliver', ':id') }}`.replace(':id', salesId),
                 type: 'POST',
+                dataType: 'json',
                 data: {
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
-                    alert(response.message);
-                    location.reload();
+                    if (response.success) {
+                        alert(response.message); // Tampilkan notifikasi "Sales berhasil dikirim"
+                        $('#stockModal').modal('hide'); // Tutup modal
+                        location.reload(); // Reload halaman
+                    } else {
+                        alert(response.message);
+                    }
                 },
-                error: function(xhr) {
-                    alert(xhr.responseJSON.message);
+                error: function(xhr, status, error) {
+                    console.error(xhr.responseText); // Log error untuk debugging
+                    alert('Terjadi kesalahan: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
                 }
             });
         }
@@ -222,20 +284,51 @@
             }
 
             $.ajax({
-                url: `{{ route('sales.payment', ['id' => ':id']) }}`.replace(':id', salesId),
+                url: `{{ route('sales.payment', ':id') }}`.replace(':id', salesId),
                 type: 'POST',
+                dataType: 'json',
                 data: {
                     _token: '{{ csrf_token() }}',
                     payment_method: paymentMethod
                 },
                 success: function(response) {
-                    alert(response.message);
-                    location.reload();
+                    if (response.success) {
+                        alert(response.message);
+                        $('#paymentModal').modal('hide');
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
                 },
-                error: function(xhr) {
-                    alert(xhr.responseJSON.message);
+                error: function(xhr, status, error) {
+                    console.error(xhr.responseText); // Log error untuk debugging
+                    alert('Terjadi kesalahan: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
                 }
             });
+        }
+
+        function confirmDelete(salesId) {
+            if (confirm('Apakah Anda yakin ingin menghapus sales ini?')) {
+                $.ajax({
+                    url: `{{ route('sales.destroy', ':id') }}`.replace(':id', salesId),
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                        alert('Terjadi kesalahan: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                    }
+                });
+            }
         }
     </script>
 @endsection

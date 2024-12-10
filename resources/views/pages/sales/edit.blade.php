@@ -1,16 +1,18 @@
 @extends('layouts.master')
 
-@section('title', 'Tambah Sales')
+@section('title', 'Edit Sales')
 
 @section('content')
     <div class="page-header">
-        <h3 class="page-title text-light">Tambah Sales</h3>
+        <h3 class="page-title text-light">Edit Sales</h3>
     </div>
 
     <div class="card">
         <div class="card-body">
-            <form id="sales-form" action="{{ route('sales.store') }}" method="POST">
+            <form id="sales-form" action="{{ route('sales.update', $sales->id) }}" method="POST">
                 @csrf
+                @method('PUT')
+                <input type="hidden" name="sales_id" value="{{ $sales->id }}">
 
                 <div class="row">
                     <div class="col-md-6">
@@ -18,7 +20,7 @@
                             <label for="sales_code" class="text-light">Kode Sales</label>
                             <input type="text"
                                 class="form-control subtotal-input @error('sales_code') is-invalid @enderror"
-                                name="sales_code" value="{{ $salesCode }}" readonly>
+                                name="sales_code" value="{{ $sales->sales_code }}" readonly>
                             @error('sales_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -31,7 +33,10 @@
                                 required>
                                 <option value="">Pilih Customer</option>
                                 @foreach ($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->nama_customer }}</option>
+                                    <option value="{{ $customer->id }}"
+                                        {{ $sales->customer_id == $customer->id ? 'selected' : '' }}>
+                                        {{ $customer->nama_customer }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('customer_id')
@@ -46,7 +51,8 @@
                         <div class="form-group">
                             <label for="expiry_date" class="text-light">Tanggal Kadaluarsa</label>
                             <input type="date" class="form-control @error('expiry_date') is-invalid @enderror"
-                                name="expiry_date" required>
+                                name="expiry_date" value="{{ \Carbon\Carbon::parse($sales->expiry_date)->format('Y-m-d') }}"
+                                required>
                             @error('expiry_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -55,7 +61,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="billing_address" class="text-light">Alamat Penagihan</label>
-                            <textarea name="billing_address" class="form-control @error('billing_address') is-invalid @enderror" required>{{ old('billing_address') }}</textarea>
+                            <textarea name="billing_address" class="form-control @error('billing_address') is-invalid @enderror" required>{{ $sales->billing_address }}</textarea>
                             @error('billing_address')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -67,7 +73,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="shipping_address" class="text-light">Alamat Pengiriman</label>
-                            <textarea name="shipping_address" class="form-control @error('shipping_address') is-invalid @enderror" required>{{ old('shipping_address') }}</textarea>
+                            <textarea name="shipping_address" class="form-control @error('shipping_address') is-invalid @enderror" required>{{ $sales->shipping_address }}</textarea>
                             @error('shipping_address')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -88,34 +94,44 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <select name="items[0][product_id]" class="form-control item-select" required>
-                                        <option value="">Pilih Barang</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}" data-price="{{ $product->price }}">
-                                                {{ $product->nama_produk }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="number" name="items[0][quantity]"
-                                        class="form-control quantity-input text-right" step="0.01" min="0.01"
-                                        required>
-                                </td>
-                                <td>
-                                    <input type="text" name="items[0][price]" class="form-control price-input text-right"
-                                        readonly>
-                                </td>
-                                <td>
-                                    <input type="text" name="items[0][subtotal]"
-                                        class="form-control subtotal-input text-right" readonly>
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-success btn-sm btn-add-row">+</button>
-                                </td>
-                            </tr>
+                            @foreach ($sales->items as $index => $item)
+                                <tr>
+                                    <td>
+                                        <select name="items[{{ $index }}][product_id]"
+                                            class="form-control item-select" required>
+                                            <option value="">Pilih Barang</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}" data-price="{{ $product->price }}"
+                                                    {{ $item->product_id == $product->id ? 'selected' : '' }}>
+                                                    {{ $product->nama_produk }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="items[{{ $index }}][quantity]"
+                                            class="form-control quantity-input text-right" step="0.01" min="0.01"
+                                            value="{{ $item->quantity }}" required>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="items[{{ $index }}][price]"
+                                            class="form-control price-input text-right" value="{{ $item->price }}"
+                                            readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="items[{{ $index }}][subtotal]"
+                                            class="form-control subtotal-input text-right" value="{{ $item->subtotal }}"
+                                            readonly>
+                                    </td>
+                                    <td class="text-center">
+                                        @if ($loop->first)
+                                            <button type="button" class="btn btn-success btn-sm btn-add-row">+</button>
+                                        @else
+                                            <button type="button" class="btn btn-danger btn-sm btn-delete-row">-</button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
                         </tbody>
                         <tfoot>
                             <tr>
@@ -131,7 +147,7 @@
                 </div>
 
                 <div class="form-group mt-4">
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
                     <a href="{{ route('sales.index') }}" class="btn btn-secondary">Batal</a>
                 </div>
             </form>
@@ -232,6 +248,11 @@
                     event.target.closest('tr').remove();
                     updateTotalAmount();
                 }
+            });
+
+            // Inisialisasi subtotal dan total saat halaman dimuat
+            materialsTable.querySelectorAll('tbody tr').forEach(row => {
+                calculateSubtotal(row);
             });
 
             // Submit form

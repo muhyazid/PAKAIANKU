@@ -8,6 +8,7 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class SalesController extends Controller
 {
@@ -101,17 +102,95 @@ class SalesController extends Controller
 
     public function edit(string $id)
     {
-        //
+        $sales = Sales::with('customer', 'items.product')->findOrFail($id);
+        $customers = Customer::all();
+        $products = Product::all();
+
+        return view('pages.sales.edit', compact('sales', 'customers', 'products'));
     }
 
     public function update(Request $request, string $id)
     {
-        //
+        try {
+            $validatedData = $request->validate([
+                'customer_id' => 'required|exists:customers,id',
+                'billing_address' => 'required',
+                'shipping_address' => 'required',
+                'expiry_date' => 'required|date',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity' => 'required|numeric|min:0.01',
+                'items.*.price' => 'required|numeric|min:0.01',
+            ]);
+
+            // Temukan Sales yang akan diupdate
+            $sales = Sales::findOrFail($id);
+
+            // Update Sales
+            $sales->update([
+                'customer_id' => $validatedData['customer_id'],
+                'billing_address' => $validatedData['billing_address'],
+                'shipping_address' => $validatedData['shipping_address'],
+                'expiry_date' => $validatedData['expiry_date'],
+            ]);
+
+            // Hapus item sales yang lama
+            $sales->items()->delete();
+
+            // Tambahkan item sales yang baru
+            foreach ($validatedData['items'] as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                $subtotal = $product->price * $item['quantity'];
+                $sales->items()->create([
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $product->price,
+                    'subtotal' => $subtotal,
+                ]);
+            }
+
+            // Return JSON response untuk AJAX
+            return response()->json([
+                'success' => true, 
+                'message' => 'Sales Order berhasil diupdate.',
+                'redirect' => route('sales.index')
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            return response()->json([
+                'success' => false, 
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            // Handle other errors
+            return response()->json([
+                'success' => false, 
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(string $id)
     {
-        //
+        try {
+        $sales = Sales::findOrFail($id);
+
+        // Hapus semua item sales terkait
+        $sales->items()->delete();
+
+        // Hapus sales
+        $sales->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sales berhasil dihapus.'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+        ], 500);
+    }
     }
 
     public function confirmSales(Request $request, $id)
@@ -153,9 +232,9 @@ class SalesController extends Controller
     {
         try {
             $sales = Sales::findOrFail($id);
+            
+            // Validasi metode pembayaran
             $paymentMethod = $request->input('payment_method');
-
-             // Validasi metode pembayaran
             if (!in_array($paymentMethod, [
                 Sales::PAYMENT_METHODS['CASH'], 
                 Sales::PAYMENT_METHODS['TRANSFER']
@@ -173,6 +252,7 @@ class SalesController extends Controller
                 ], 400);
             }
 
+            // Ubah status sales menjadi DONE dan set metode pembayaran
             $sales->status = Sales::STATUS['DONE'];
             $sales->payment_method = $paymentMethod;
             $sales->save();
@@ -191,18 +271,19 @@ class SalesController extends Controller
 
     public function generateInvoice($id)
     {
-        $sales = Sales::with('customer', 'items.product')->findOrFail($id);
-        
+        $sale = Sales::with('customer', 'items.product')->findOrFail($id); // Ubah dari $sales ke $sale
+    
         $pdf = app('dompdf.wrapper');
-        $pdf->loadView('pages.sales.invoice', compact('sales'));
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->loadView('pages.sales.invoice', compact('sale')); // Gunakan 'sale' di compact()
 
-        return $pdf->download('invoice-' . $sales->sales_code . '.pdf');
+        return $pdf->download('invoice-' . $sale->sales_code . '.pdf');
     }
 
     public function checkStockAvailability($id)
     {
         try {
-            $sales = Sales::with('items.product')->findOrFail($id);
+            $sales = Sales::with('customer', 'items.product')->findOrFail($id);
 
             
             if ($sales->status !== Sales::STATUS['SALES_ORDER']) {
@@ -221,7 +302,7 @@ class SalesController extends Controller
                 $currentStock = $product->stock;
 
                 $availability = [
-                    'product_name' => $product->nama_produk,
+                    'nama_produk' => $product->nama_produk,
                     'requested_quantity' => $requestedQuantity,
                     'current_stock' => $currentStock,
                     'is_available' => $currentStock >= $requestedQuantity
@@ -236,6 +317,8 @@ class SalesController extends Controller
 
             return response()->json([
                 'success' => true,
+                'sales_code' => $sales->sales_code,
+                'sales_name' => $sales->customer->nama_customer ?? 'N/A',
                 'is_all_available' => $isAllAvailable,
                 'stock_availability' => $stockAvailability
             ]);
@@ -248,39 +331,29 @@ class SalesController extends Controller
         }
     }
 
-    public function deliverSales($id)
+    public function deliverSales(Request $request, $id)
     {
         try {
-            $sales = Sales::with('items')->findOrFail($id);
-
-            if ($sales->status !== Sales::STATUS['SALES_ORDER']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Status sales order tidak valid untuk dikirim.'
-                ], 400);
-            }
+            $sale = Sales::findOrFail($id);
+            
+            // Lakukan logika pengiriman di sini
+            // Misalnya, ubah status sales menjadi 'DELIVERED'
+            $sale->status = Sales::STATUS['DELIVERED'];
+            $sale->save();
 
             // Kurangi stok produk
-            foreach ($sales->items as $item) {
+            foreach ($sale->items as $item) {
                 $product = $item->product;
-                if ($product->stock < $item->quantity) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Stok produk {$product->nama_produk} tidak mencukupi."
-                    ], 400);
-                }
                 $product->stock -= $item->quantity;
                 $product->save();
             }
 
-            $sales->status = Sales::STATUS['DELIVERED'];
-            $sales->save();
-
             return response()->json([
                 'success' => true,
-                'message' => 'Sales Order berhasil dikirim.'
+                'message' => 'Sales berhasil dikirim'
             ]);
         } catch (\Exception $e) {
+            Log::error('Error in deliver method: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengirim sales: ' . $e->getMessage()
