@@ -7,14 +7,13 @@ use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SuppliersController;
 use App\Http\Controllers\ManufacturingOrderController;
 
 Route::resource('rfq', RfQController::class);
 
-Route::get('/dashboard', function ()  {
-    return view('pages.dashboard');
-});
+Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
 // Route::get('/produk', [ProductController::class, 'index']);
 Route::resource('products', ProductController::class);
@@ -28,6 +27,7 @@ Route::get('/boms/get-next-code', [BoMController::class, 'getNextBoMCode'])->nam
 Route::get('/boms/{id}/report', [BoMController::class, 'report'])->name('boms.report');
 
 Route::resource('manufacturing_orders', ManufacturingOrderController::class);
+
 Route::get('/manufacturing_orders/materials/{productId}', [ManufacturingOrderController::class, 'getMaterialsByProduct']);
 Route::get('/api/bom-materials/{productId}', [ManufacturingOrderController::class, 'getBomMaterials']);
 Route::get('/manufacturing_orders/{id}/check-stock', [ManufacturingOrderController::class, 'checkStock']);

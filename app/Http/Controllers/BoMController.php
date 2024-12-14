@@ -33,7 +33,12 @@ class BoMController extends Controller
         //
         $products = Product::all();
         $materials = Material::all();
-        return view('pages.boms.create', compact('products', 'materials'));
+
+         // Generate kode BoM
+        $lastBoM = BoM::latest('id')->first();
+        $nextCode = $lastBoM ? 'BOM' . str_pad($lastBoM->id + 1, 5, '0', STR_PAD_LEFT) : 'BOM00001';
+
+        return view('pages.boms.create', compact('products', 'materials', 'nextCode'));
     }
 
     /**
@@ -42,8 +47,8 @@ class BoMController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'production_code' => 'required|unique:boms,production_code',
             'product_id' => 'required|exists:products,id',
-            // 'production_code' => 'required|string|unique:boms,production_code',
             'quantity' => 'required|integer|min:1',
             'materials' => 'required|array|min:1',
             'materials.*.material_id' => 'required|exists:materials,id',
@@ -93,9 +98,10 @@ class BoMController extends Controller
      */
     public function edit(string $id)
     {
-        $bom = BoM::with('materials')->findOrFail($id);
-        $products = Product::all();
-        $materials = Material::all();
+        $bom = BoM::with('materials')->findOrFail($id); // Ambil data BoM dengan relasi materials
+        $products = Product::all(); // Ambil semua produk
+        $materials = Material::all(); // Ambil semua material
+
         return view('pages.boms.edit', compact('bom', 'products', 'materials'));
     }
 

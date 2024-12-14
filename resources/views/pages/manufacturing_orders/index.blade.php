@@ -51,8 +51,10 @@
                                                 Akhiri
                                             </button>
                                         @endif
+
                                         <a href="{{ route('manufacturing_orders.edit', $order->id) }}"
                                             class="btn btn-sm btn-warning">Edit</a>
+
                                         <form action="{{ route('manufacturing_orders.destroy', $order->id) }}"
                                             method="POST" onsubmit="return confirm('Apakah Anda yakin?')">
                                             @csrf
@@ -61,6 +63,7 @@
                                         </form>
                                     </div>
                                 </td>
+
                             </tr>
                         @endforeach
                     </tbody>

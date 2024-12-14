@@ -68,8 +68,8 @@
             </a>
         </li>
 
-        <li class="nav-item menu-items {{ Request::is('products') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ url('/products') }}">
+        <li class="nav-item menu-items {{ Request::is('products*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('products.index') }}">
                 <span class="menu-icon">
                     <i class="mdi mdi-playlist-play"></i>
                 </span>
@@ -77,7 +77,7 @@
             </a>
         </li>
 
-        <li class="nav-item menu-items {{ Request::is('suppliers') ? 'active' : '' }}">
+        <li class="nav-item menu-items {{ Request::is('suppliers*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('suppliers.index') }}">
                 <span class="menu-icon">
                     <i class="mdi mdi-playlist-play"></i>
@@ -86,16 +86,24 @@
             </a>
         </li>
 
-        <li class="nav-item menu-items {{ Request::is('material') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ url('/materials') }}">
+        <li class="nav-item menu-items {{ Request::is('material*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('materials.index') }}">
                 <span class="menu-icon">
                     <i class="mdi mdi-table-large"></i>
                 </span>
                 <span class="menu-title">Material</span>
             </a>
         </li>
-        <li class="nav-item menu-items {{ Request::is('boms') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ url('/boms') }}">
+        <li class="nav-item menu-items {{ Request::is('customers*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('customers.index') }}">
+                <span class="menu-icon">
+                    <i class="mdi mdi-account-multiple"></i>
+                </span>
+                <span class="menu-title">Customers</span>
+            </a>
+        </li>
+        <li class="nav-item menu-items {{ Request::is('boms*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('boms.index') }}">
                 <span class="menu-icon">
                     <i class="mdi mdi-cloud-print-outline"></i>
                 </span>
@@ -104,8 +112,8 @@
         </li>
 
         <!-- Tambahan menu Manufacturing Order -->
-        <li class="nav-item menu-items {{ Request::is('manufacturing_orders') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ url('/manufacturing_orders') }}">
+        <li class="nav-item menu-items {{ Request::is('manufacturing_orders*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('manufacturing_orders.index') }}">
                 <span class="menu-icon">
                     <i class="mdi mdi-factory"></i>
                 </span>
@@ -123,14 +131,7 @@
             </a>
         </li>
 
-        <li class="nav-item menu-items {{ Request::is('customers') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('customers.index') }}">
-                <span class="menu-icon">
-                    <i class="mdi mdi-account-multiple"></i>
-                </span>
-                <span class="menu-title">Customers</span>
-            </a>
-        </li>
+
 
         <li class="nav-item menu-items {{ Request::is('sales*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('sales.index') }}">

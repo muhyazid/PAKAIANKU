@@ -1,52 +1,44 @@
-<form action="{{ route('suppliers.store') }}" method="POST">
-    @csrf
-    <div class="container-fluid">
-        <style>
-            /* Ensure labels are visible against a dark background */
-            .form-group label {
-                color: #f0f0f0;
-                /* Adjust color to a light shade for better contrast */
-                font-weight: 600;
-                /* Optional: make the text a bit bolder */
-            }
-        </style>
-        <div class="row">
-            <div class="col-md-12">
-                <h5 class="modal-title mb-3">Tambah Supplier Baru</h5>
-                <div class="card p-3">
+<!-- views/pages/suppliers/create.blade.php -->
+<div class="modal fade" id="addSuppliersModal" tabindex="-1" role="dialog" aria-labelledby="addSuppliersModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSuppliersModalLabel">Tambah Supplier</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('suppliers.store') }}" method="POST">
+                @csrf
+                <div class="modal-body">
                     <div class="form-group">
                         <label for="nama">Nama Supplier</label>
-                        <input type="text" name="nama" class="form-control" id="nama"
-                            placeholder="Masukkan Nama Supplier" required>
+                        <input type="text" class="form-control" id="nama" name="nama" required>
                     </div>
-
                     <div class="form-group">
                         <label for="no_tlp">No Telepon</label>
-                        <input type="text" name="no_tlp" class="form-control" id="no_tlp"
-                            placeholder="Masukkan No Telepon" required>
+                        <input type="text" class="form-control" id="no_tlp" name="no_tlp" required>
                     </div>
-
                     <div class="form-group">
                         <label for="alamat">Alamat</label>
-                        <textarea name="alamat" class="form-control" id="alamat" rows="3" placeholder="Masukkan Alamat"></textarea>
+                        <textarea class="form-control" id="alamat" name="alamat" required></textarea>
                     </div>
-
                     <div class="form-group">
-                        <label for="material_id">Material yang Disediakan</label>
-                        <select name="material_id" class="form-control" id="material_id" required>
+                        <label for="material_id">Material</label>
+                        <select class="form-control" id="material_id" name="material_id">
                             <option value="">Pilih Material</option>
                             @foreach ($materials as $material)
                                 <option value="{{ $material->id }}">{{ $material->nama_bahan }}</option>
                             @endforeach
                         </select>
                     </div>
-
-                    <div class="text-right mt-4">
-                        <button type="submit" class="btn btn-primary">Simpan</button>
-                        <a href="{{ route('suppliers.index') }}" class="btn btn-secondary">Batal</a>
-                    </div>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Tambah Supplier</button>
+                </div>
+            </form>
         </div>
     </div>
-</form>
+</div>

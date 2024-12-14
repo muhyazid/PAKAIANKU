@@ -1,30 +1,27 @@
 <div class="modal fade" id="viewBoMModal-{{ $bom->id }}" tabindex="-1" role="dialog"
     aria-labelledby="viewBoMModalLabel" aria-hidden="true">
-    <div class="modal-dialog custom-modal-size" role="document"> <!-- Tambahkan custom-modal-size -->
-        <div class="modal-content">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-dark text-white">
             <div class="modal-header">
-                <h5 class="modal-title text-white" id="viewBoMModalLabel">Detail Bill of Materials (BoM)</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="viewBoMModalLabel">Detail BoM</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body text-white">
-                <h5>Nama Produk: {{ $bom->product_name }}</h5>
-                <p>Kode Produksi: {{ $bom->production_code }}</p>
-                <p>Total Komponen: {{ $bom->components->count() }}</p>
-
-                <h6>Daftar Komponen:</h6>
+            <div class="modal-body">
+                <p><strong>Kode Produksi:</strong> {{ $bom->production_code }}</p>
+                <p><strong>Nama Produk:</strong>
+                    {{ $bom->product->nama_produk ?? 'Produk tidak ditemukan' }}</p>
+                <h6>Komponen:</h6>
                 <ul>
-                    @foreach ($bom->components as $component)
-                        <li>
-                            {{ $component->material->nama_bahan }} - Jumlah: {{ $component->quantity }}
-                            {{ $component->unit }}
-                        </li>
+                    @foreach ($bom->materials as $material)
+                        <li>{{ $material->nama_bahan }} - {{ $material->pivot->quantity }}
+                            {{ $material->pivot->unit }}</li>
                     @endforeach
                 </ul>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>

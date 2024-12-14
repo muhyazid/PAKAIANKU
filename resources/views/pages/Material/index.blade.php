@@ -19,12 +19,12 @@
                 <table class="table table-dark">
                     <thead>
                         <tr>
-                            <th>Nomor</th>
+                            <th>No</th>
                             <th>Nama Bahan</th>
                             <th>Kuantitas</th>
                             <th>Satuan</th>
-                            <th>Stock</th>
-                            <th>Price</th>
+                            <th>Stok</th>
+                            <th>Harga</th>
                             <th>Gambar</th>
                             <th>Aksi</th>
                         </tr>
@@ -32,7 +32,7 @@
                     <tbody>
                         @foreach ($materials as $index => $material)
                             <tr>
-                                <td>{{ $index + 1 }}</td> <!-- Menggunakan nomor urut -->
+                                <td>{{ $index + 1 }}</td>
                                 <td>{{ $material->nama_bahan }}</td>
                                 <td>{{ $material->kuantitas }}</td>
                                 <td>{{ $material->satuan }}</td>
@@ -49,13 +49,9 @@
                                 <td>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-sm btn-info" data-toggle="modal"
-                                            data-target="#viewMaterialModal-{{ $material->id }}">
-                                            View
-                                        </button>
+                                            data-target="#viewMaterialModal-{{ $material->id }}">View</button>
                                         <button type="button" class="btn btn-sm btn-warning" data-toggle="modal"
-                                            data-target="#editMaterialModal-{{ $material->id }}">
-                                            Edit
-                                        </button>
+                                            data-target="#editMaterialModal-{{ $material->id }}">Edit</button>
                                         <form action="{{ route('materials.destroy', $material->id) }}" method="POST"
                                             style="display:inline;">
                                             @csrf
@@ -66,105 +62,6 @@
                                     </div>
                                 </td>
                             </tr>
-
-                            <!-- Modal View -->
-                            <div class="modal fade" id="viewMaterialModal-{{ $material->id }}" tabindex="-1"
-                                role="dialog" aria-labelledby="viewMaterialModalLabel" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content bg-dark text-white">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="viewMaterialModalLabel">Detail Material</h5>
-                                            <button type="button" class="close text-white" data-dismiss="modal"
-                                                aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="text-center">
-                                                @if ($material->image)
-                                                    <img src="{{ asset('storage/' . $material->image) }}"
-                                                        alt="{{ $material->nama_bahan }}" class="img-fluid rounded mb-3">
-                                                @else
-                                                    Tidak ada gambar
-                                                @endif
-                                            </div>
-                                            <p><strong>Nama:</strong> {{ $material->nama_bahan }}</p>
-                                            <p><strong>Kuantitas:</strong> {{ $material->kuantitas }}</p>
-                                            <p><strong>Satuan:</strong> {{ $material->satuan }}</p>
-                                            <p><strong>Stock:</strong> {{ $material->stock }}</p>
-                                            <p><strong>Harga:</strong> {{ number_format($material->price, 2, ',', '.') }}
-                                            </p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Close</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Modal Edit -->
-                            <div class="modal fade" id="editMaterialModal-{{ $material->id }}" tabindex="-1"
-                                role="dialog" aria-labelledby="editMaterialModalLabel" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content bg-dark text-white">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Edit Material</h5>
-                                            <button type="button" class="close text-white" data-dismiss="modal"
-                                                aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <form action="{{ route('materials.update', $material->id) }}" method="POST"
-                                            enctype="multipart/form-data">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-body">
-                                                <div class="form-group">
-                                                    <label for="nama_bahan">Nama Bahan</label>
-                                                    <input type="text" class="form-control bg-dark text-white"
-                                                        id="nama_bahan" name="nama_bahan"
-                                                        value="{{ $material->nama_bahan }}" required>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="kuantitas">Kuantitas</label>
-                                                    <input type="number" class="form-control bg-dark text-white"
-                                                        id="kuantitas" name="kuantitas" value="{{ $material->kuantitas }} "
-                                                        required>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="satuan">Satuan</label>
-                                                    <input type="text" class="form-control bg-dark text-white"
-                                                        id="satuan" name="satuan" value="{{ $material->satuan }}"
-                                                        required>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="stock">Stock</label>
-                                                    <input type="number" class="form-control bg-dark text-white"
-                                                        id="stock" name="stock" value="{{ $material->stock }}"
-                                                        disabled>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="price">Price</label>
-                                                    <input type="number" class="form-control bg-dark text-white"
-                                                        id="price" name="price" value="{{ $material->price }}"
-                                                        required>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="image">Gambar</label>
-                                                    <input type="file" class="form-control-file" id="image"
-                                                        name="image">
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary"
-                                                    data-dismiss="modal">Close</button>
-                                                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                         @endforeach
                     </tbody>
                 </table>
@@ -172,56 +69,9 @@
         </div>
     </div>
 
-    <!-- Modal Tambah Material -->
-    <div class="modal fade" id="addMaterialModal" tabindex="-1" role="dialog" aria-labelledby="addMaterialModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addMaterialModalLabel">Tambah Material</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form action="{{ route('materials.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="nama_bahan">Nama Bahan</label>
-                            <input type="text" class="form-control bg-dark text-white" id="nama_bahan"
-                                name="nama_bahan" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="kuantitas">Kuantitas</label>
-                            <input type="number" class="form-control bg-dark text-white" id="kuantitas"
-                                name="kuantitas" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="satuan">Satuan</label>
-                            <input type="text" class="form-control bg-dark text-white" id="satuan" name="satuan"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label for="stock">Stock</label>
-                            <input type="number" class="form-control bg-dark text-white" id="stock" name="stock"
-                                value="0" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label for="price">Harga</label>
-                            <input type="number" class="form-control bg-dark text-white" id="price" name="price"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label for="image">Gambar</label>
-                            <input type="file" class="form-control-file" id="image" name="image">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                        <button type="submit" class="btn btn-primary">Tambah Material</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Include Modals -->
+    @include('pages.material.create')
+    @include('pages.material.edit')
+    @include('pages.material.view')
+
 @endsection

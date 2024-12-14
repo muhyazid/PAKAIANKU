@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class ManufacturingOrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+   
     public function index()
     {
         //
@@ -20,20 +18,15 @@ class ManufacturingOrderController extends Controller
         return view('pages.manufacturing_orders.index', compact('orders'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
-       $products = Product::all();
+        $nextId = ManufacturingOrder::max('id') + 1; // Atau logika lain untuk mendapatkan ID berikutnya
+        $kodeMO = 'MO-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
+        $products = Product::all();
         $materials = Material::all();
-        return view('pages.manufacturing_orders.create', compact('products', 'materials'));
+        return view('pages.manufacturing_orders.create', compact('products', 'materials', 'kodeMO'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         try {
@@ -76,48 +69,66 @@ class ManufacturingOrderController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        //
+        
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        //
-        $order = ManufacturingOrder::findOrFail($id);
+         $order = ManufacturingOrder::with('materials', 'product')->findOrFail($id);
         $products = Product::all();
         return view('pages.manufacturing_orders.edit', compact('order', 'products'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        //
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date',
-            'status' => 'required|in:Draft,Confirmed,Done',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $order = ManufacturingOrder::findOrFail($id);
-        $order->update($request->only('product_id', 'quantity', 'start_date', 'end_date', 'status'));
+            $validated = $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'kode_MO' => 'required|string|max:50',
+                'quantity' => 'required|numeric|min:0.01',
+                'start_date' => 'required|date',
+                'materials' => 'required|array',
+                'materials.*.material_id' => 'required|exists:materials,id',
+                'materials.*.to_consume' => 'required|numeric|min:0'
+            ]);
 
-        return redirect()->route('manufacturing_orders.index')->with('success', 'Manufacturing Order berhasil diperbarui.');
+            $order = ManufacturingOrder::findOrFail($id);
+
+            // Update the manufacturing order
+            $order->update([
+                'product_id' => $validated['product_id'],
+                'quantity' => $validated['quantity'],
+                'start_date' => $validated['start_date']
+                
+            ]);
+
+            // Sync materials
+            $materialsData = [];
+            foreach ($validated['materials'] as $materialId => $materialData) {
+                $materialsData[$materialId] = [
+                    'to_consume' => $materialData['to_consume'],
+                    'quantity' => $materialData['to_consume']
+                ];
+            }
+
+            // Sync the materials with the order
+            $order->materials()->sync($materialsData);
+
+            DB::commit();
+            return redirect()->route('manufacturing_orders.index')
+                        ->with('success', 'Manufacturing Order berhasil diperbarui');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                        ->withInput();
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         //
